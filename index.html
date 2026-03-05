@@ -348,7 +348,7 @@
     <div class="card">
       <!-- Drop / preview zone -->
       <div class="drop-zone" id="dropZone">
-        <input type="file" id="fileInput" accept="video/*" />
+        <input type="file" id="fileInput" accept="video/mp4" />
         <video id="videoPreview" controls></video>
         <div class="drop-icon">
           <svg viewBox="0 0 24 24"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z"/></svg>
@@ -409,7 +409,10 @@
     const btnSubmit   = document.getElementById('btnSubmit');
 
     function loadFile(file) {
-      if (!file || !file.type.startsWith('video/')) return;
+      if (!file) return;
+  if (file.type !== 'video/mp4') {
+    alert('Only MP4 files are supported. Please upload a .mp4 file.');
+    return;}
       const url = URL.createObjectURL(file);
       videoPreview.src = url;
       dropZone.classList.add('has-video');
