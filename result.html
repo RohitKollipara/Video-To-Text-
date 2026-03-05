@@ -155,7 +155,7 @@
     @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(0,220,255,.3)} 50%{box-shadow:0 0 0 12px rgba(0,220,255,0)} }
     .placeholder-txt { font-size: 13px; color: var(--muted); letter-spacing: .04em; }
 
-    /* timeline scrubber */
+    /* timeline scrubber 
     .scrubber-row {
       display: flex; align-items: center; gap: 10px;
       margin-top: 12px;
@@ -361,12 +361,12 @@
         <input type="file" id="hiddenFileInput" accept="video/mp4" style="display:none"/>
       </div>
       <!-- scrubber -->
-      <div class="scrubber-row">
+      <!-- <div class="scrubber-row">
         <span class="time-label" id="curTime">0:00</span>
         <input type="range" class="scrubber" id="scrubber" min="0" max="100" value="0" step="0.1"/>
         <span class="time-label" id="durTime">0:00</span>
       </div>
-    </div>
+    </div> -->
 
     <!-- ACCURACY CARD -->
     <div class="accuracy-card">
@@ -438,7 +438,7 @@
     /* ── video + transcript loader ── */
     const videoEl    = document.getElementById('videoEl');
     const vidHolder  = document.getElementById('vidPlaceholder');
-    const scrubber   = document.getElementById('scrubber');
+    // const scrubber   = document.getElementById('scrubber');
     const curTime    = document.getElementById('curTime');
     const durTime    = document.getElementById('durTime');
     const transcriptContent = document.getElementById('transcriptContent');
@@ -473,7 +473,7 @@
     }
 
     /* scrubber sync */
-    videoEl.addEventListener('timeupdate', () => {
+   /* videoEl.addEventListener('timeupdate', () => {
       const pct = videoEl.duration ? (videoEl.currentTime / videoEl.duration) * 100 : 0;
       scrubber.value = pct;
       curTime.textContent = fmtTime(videoEl.currentTime);
@@ -488,7 +488,7 @@
     });
     scrubber.addEventListener('input', () => {
       if (videoEl.duration) videoEl.currentTime = (scrubber.value / 100) * videoEl.duration;
-    });
+    }); */
 
     /* accuracy bar on page load (demo) */
     window.addEventListener('load', () => {
