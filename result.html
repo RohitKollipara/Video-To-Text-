@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Video to Text – Results | SharkAttack</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #080b12;
+      --panel:     #0e1320;
+      --surface:   #131929;
+      --surface2:  #1c2438;
+      --border:    rgba(255,255,255,0.07);
+      --border-hi: rgba(0,220,255,0.35);
+      --accent:    #00dcff;
+      --accent2:   #0078ff;
+      --green:     #00e897;
+      --yellow:    #ffd166;
+      --red:       #ff4f6b;
+      --text:      #e8f0ff;
+      --muted:     #5a6585;
+      --mono:      'JetBrains Mono', monospace;
+    }
+    [data-theme="light"] {
+      --bg:        #edf1fb;
+      --panel:     #ffffff;
+      --surface:   #f4f7ff;
+      --surface2:  #e4eaf8;
+      --border:    rgba(0,0,0,0.08);
+      --border-hi: rgba(0,100,220,0.35);
+      --accent:    #0060d0;
+      --accent2:   #003fa3;
+      --green:     #00a86b;
+      --text:      #0a0f24;
+      --muted:     #8892b0;
+    }
+
+    html, body { height: 100%; font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); transition: background .4s, color .4s; }
+
+    /* ── mesh bg ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 55% 45% at 10% 10%, rgba(0,220,255,.06) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 60% at 90% 90%, rgba(0,120,255,.06) 0%, transparent 60%);
+    }
+    body::after {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 52px 52px;
+      opacity: .35;
+    }
+
+    /* ── chrome ── */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px;
+      background: rgba(8,11,18,.7);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+      transition: background .4s, border .4s;
+    }
+    [data-theme="light"] header { background: rgba(237,241,251,.8); }
+
+    .logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px; letter-spacing: .12em;
+      background: linear-gradient(135deg, var(--text) 30%, var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    .theme-toggle {
+      display: flex; align-items: center; gap: 9px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 50px; padding: 6px 14px 6px 9px;
+      cursor: pointer; transition: box-shadow .25s;
+    }
+    .theme-toggle:hover { box-shadow: 0 0 0 1px var(--accent); }
+    .toggle-track { width: 32px; height: 18px; background: var(--surface2); border-radius: 18px; position: relative; border: 1px solid var(--border); }
+    .toggle-thumb { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); transition: transform .3s; }
+    [data-theme="light"] .toggle-thumb { transform: translateX(14px); }
+    .toggle-lbl { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .05em; user-select: none; }
+
+    .team-tag {
+      position: fixed; bottom: 20px; left: 22px; z-index: 200;
+      display: flex; align-items: center; gap: 7px;
+    }
+    .shark { font-size: 16px; animation: swim 3s ease-in-out infinite; }
+    .team-name { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: .18em; color: var(--accent); text-shadow: 0 0 10px rgba(0,220,255,.4); }
+    @keyframes swim { 0%,100%{transform:translateX(0) rotate(0)} 50%{transform:translateX(4px) rotate(5deg)} }
+
+    /* ── main grid ── */
+    .workspace {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      padding: 76px 24px 48px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto 1fr auto;
+      gap: 0 20px;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    /* col headers */
+    .col-header {
+      padding: 18px 0 12px;
+      display: flex; align-items: center; gap: 10px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+      animation: fadeUp .6s ease both;
+    }
+    .col-header.right { animation-delay: .1s; }
+    .col-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .col-dot.blue { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+    .col-dot.green { background: var(--green); box-shadow: 0 0 8px var(--green); }
+    .col-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: .12em; color: var(--text); }
+    .col-badge { margin-left: auto; font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+
+    /* ── video panel ── */
+    .video-panel {
+      grid-column: 1; grid-row: 2;
+      display: flex; flex-direction: column; gap: 0;
+      animation: fadeUp .6s .05s ease both;
+    }
+    .video-wrap {
+      width: 100%; aspect-ratio: 16/9;
+      background: #000;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      position: relative;
+      box-shadow: 0 20px 60px rgba(0,0,0,.5);
+    }
+    .video-wrap video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .video-placeholder {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+      background: var(--surface);
+    }
+    .play-ring {
+      width: 64px; height: 64px; border-radius: 50%;
+      border: 2px solid var(--border-hi);
+      display: flex; align-items: center; justify-content: center;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    .play-ring svg { width: 24px; height: 24px; fill: var(--accent); margin-left: 3px; }
+    @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(0,220,255,.3)} 50%{box-shadow:0 0 0 12px rgba(0,220,255,0)} }
+    .placeholder-txt { font-size: 13px; color: var(--muted); letter-spacing: .04em; }
+
+    /* timeline scrubber */
+    .scrubber-row {
+      display: flex; align-items: center; gap: 10px;
+      margin-top: 12px;
+    }
+    .time-label { font-family: var(--mono); font-size: 11px; color: var(--muted); min-width: 38px; }
+    .scrubber {
+      flex: 1; -webkit-appearance: none; height: 4px;
+      background: var(--surface2); border-radius: 4px; outline: none; cursor: pointer;
+      transition: height .2s;
+    }
+    .scrubber:hover { height: 6px; }
+    .scrubber::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px rgba(0,220,255,.6); cursor: pointer; }
+
+    /* ── accuracy card ── */
+    .accuracy-card {
+      grid-column: 1; grid-row: 3;
+      margin-top: 20px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 24px;
+      animation: fadeUp .6s .2s ease both;
+      transition: background .4s;
+    }
+    .acc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .acc-label { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+    .acc-value { font-family: 'Bebas Neue', sans-serif; font-size: 38px; line-height: 1; color: var(--green); text-shadow: 0 0 20px rgba(0,232,151,.3); }
+    .acc-unit { font-size: 18px; color: var(--muted); }
+
+    .acc-bar-track {
+      width: 100%; height: 8px; background: var(--surface2); border-radius: 8px; overflow: hidden; margin-bottom: 14px;
+    }
+    .acc-bar-fill {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, var(--accent2), var(--green));
+      border-radius: 8px;
+      transition: width 1.4s cubic-bezier(.22,1,.36,1);
+      box-shadow: 0 0 12px rgba(0,232,151,.4);
+    }
+
+    .acc-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+    .stat-chip {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 10px 12px; text-align: center;
+    }
+    .stat-num { font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--text); }
+    .stat-lbl { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
+
+    /* ── transcript panel ── */
+    .transcript-panel {
+      grid-column: 2; grid-row: 2;
+      display: flex; flex-direction: column;
+      animation: fadeUp .6s .1s ease both;
+    }
+    .transcript-box {
+      flex: 1;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      overflow-y: auto;
+      max-height: 380px;
+      min-height: 200px;
+      font-family: var(--mono);
+      font-size: 13.5px;
+      line-height: 1.85;
+      color: var(--text);
+      transition: background .4s, border .4s;
+      position: relative;
+    }
+    .transcript-box::-webkit-scrollbar { width: 4px; }
+    .transcript-box::-webkit-scrollbar-track { background: transparent; }
+    .transcript-box::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 4px; }
+
+    /* word highlight */
+    .word { display: inline; transition: background .15s, color .15s; border-radius: 3px; padding: 0 2px; cursor: default; }
+    .word:hover { background: rgba(0,220,255,.15); color: var(--accent); }
+    .word.active { background: rgba(0,220,255,.22); color: var(--accent); }
+
+    .transcript-placeholder {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 10px;
+    }
+    .tp-icon { font-size: 32px; opacity: .25; }
+    .tp-txt { font-size: 13px; color: var(--muted); font-family: 'Syne', sans-serif; }
+
+    /* waveform decoration */
+    .waveform {
+      display: flex; align-items: flex-end; gap: 2px; height: 28px; margin-bottom: 10px;
+    }
+    .wave-bar {
+      width: 3px; border-radius: 3px; background: var(--accent);
+      animation: wave var(--d, .8s) ease-in-out infinite alternate;
+      opacity: .5;
+    }
+    @keyframes wave { from{height:4px} to{height:var(--h,20px)} }
+
+    /* ── action row ── */
+    .actions-panel {
+      grid-column: 2; grid-row: 3;
+      margin-top: 20px;
+      animation: fadeUp .6s .3s ease both;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .actions-row {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
+    }
+    .act-btn {
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px;
+      padding: 16px 12px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      cursor: pointer;
+      font-family: 'Syne', sans-serif;
+      font-size: 12px; font-weight: 700;
+      letter-spacing: .06em; text-transform: uppercase;
+      color: var(--muted);
+      transition: border-color .2s, color .2s, box-shadow .2s, transform .15s, background .3s;
+    }
+    .act-btn:hover { transform: translateY(-2px); }
+    .act-btn .ico { font-size: 22px; transition: transform .2s; }
+    .act-btn:hover .ico { transform: scale(1.15); }
+
+    .act-btn.make-video:hover  { border-color: var(--accent);  color: var(--accent);  box-shadow: 0 0 20px rgba(0,220,255,.15); }
+    .act-btn.copy-btn:hover    { border-color: var(--green);   color: var(--green);   box-shadow: 0 0 20px rgba(0,232,151,.15); }
+    .act-btn.reupload:hover    { border-color: var(--yellow);  color: var(--yellow);  box-shadow: 0 0 20px rgba(255,209,102,.15); }
+
+    /* toast */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 300;
+      background: var(--panel); border: 1px solid var(--border-hi);
+      border-radius: 12px; padding: 12px 20px;
+      font-size: 13px; font-weight: 600; color: var(--accent);
+      box-shadow: 0 8px 32px rgba(0,0,0,.4);
+      transform: translateY(80px); opacity: 0;
+      transition: transform .35s, opacity .35s;
+      pointer-events: none;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* ── animations ── */
+    @keyframes fadeUp { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
+
+    /* responsive */
+    @media (max-width: 760px) {
+      .workspace { grid-template-columns: 1fr; grid-template-rows: auto; gap: 0; }
+      .col-header.right { grid-row: 4; }
+      .video-panel    { grid-column: 1; grid-row: 2; }
+      .accuracy-card  { grid-column: 1; grid-row: 3; }
+      .transcript-panel { grid-column: 1; grid-row: 5; }
+      .actions-panel  { grid-column: 1; grid-row: 6; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <span class="logo">Video&nbsp;to&nbsp;Text</span>
+    <button class="theme-toggle" id="themeToggle">
+      <div class="toggle-track"><div class="toggle-thumb"></div></div>
+      <span class="toggle-lbl" id="themeLabel">DARK</span>
+    </button>
+  </header>
+
+  <!-- Team tag -->
+  <div class="team-tag">
+    <span class="shark">🦈</span>
+    <span class="team-name">SharkAttack</span>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">✓ Copied to clipboard!</div>
+
+  <main class="workspace">
+
+    <!-- LEFT col header -->
+    <div class="col-header" style="grid-column:1; grid-row:1;">
+      <span class="col-dot blue"></span>
+      <span class="col-title">Video Input</span>
+      <span class="col-badge">MP4</span>
+    </div>
+
+    <!-- RIGHT col header -->
+    <div class="col-header right" style="grid-column:2; grid-row:1;">
+      <span class="col-dot green"></span>
+      <span class="col-title">Transcript</span>
+      <span class="col-badge" id="wordCountBadge">— words</span>
+    </div>
+
+    <!-- VIDEO PANEL -->
+    <div class="video-panel">
+      <div class="video-wrap" id="videoWrap">
+        <video id="videoEl" style="display:none;" controls></video>
+        <div class="video-placeholder" id="vidPlaceholder">
+          <div class="play-ring">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <p class="placeholder-txt">No video loaded</p>
+        </div>
+        <!-- hidden file input -->
+        <input type="file" id="hiddenFileInput" accept="video/*" style="display:none"/>
+      </div>
+      <!-- scrubber -->
+      <div class="scrubber-row">
+        <span class="time-label" id="curTime">0:00</span>
+        <input type="range" class="scrubber" id="scrubber" min="0" max="100" value="0" step="0.1"/>
+        <span class="time-label" id="durTime">0:00</span>
+      </div>
+    </div>
+
+    <!-- ACCURACY CARD -->
+    <div class="accuracy-card">
+      <div class="acc-header">
+        <span class="acc-label">Accuracy Score</span>
+        <span class="acc-value" id="accValue">97<span class="acc-unit">%</span></span>
+      </div>
+      <div class="acc-bar-track"><div class="acc-bar-fill" id="accBar"></div></div>
+      <div class="acc-stats">
+        <div class="stat-chip"><div class="stat-num" id="totalWords">248</div><div class="stat-lbl">Words</div></div>
+        <div class="stat-chip"><div class="stat-num" id="totalSentences">18</div><div class="stat-lbl">Sentences</div></div>
+        <div class="stat-chip"><div class="stat-num" id="duration">2:14</div><div class="stat-lbl">Duration</div></div>
+      </div>
+    </div>
+
+    <!-- TRANSCRIPT PANEL -->
+    <div class="transcript-panel">
+      <div class="waveform" id="waveform"></div>
+      <div class="transcript-box" id="transcriptBox">
+        <div class="transcript-placeholder" id="transcriptPlaceholder">
+          <span class="tp-icon">📄</span>
+          <span class="tp-txt">Transcript will appear here</span>
+        </div>
+        <div id="transcriptContent" style="display:none;"></div>
+      </div>
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div class="actions-panel">
+      <div class="actions-row">
+        <button class="act-btn make-video" id="btnMakeVideo">
+          <span class="ico">🎬</span>
+          Make a Video
+        </button>
+        <button class="act-btn copy-btn" id="btnCopy">
+          <span class="ico">📋</span>
+          Copy Text
+        </button>
+        <button class="act-btn reupload" id="btnReupload">
+          <span class="ico">🔄</span>
+          Re-upload
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    /* ── theme ── */
+    const html = document.documentElement;
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      const dark = html.getAttribute('data-theme') === 'dark';
+      html.setAttribute('data-theme', dark ? 'light' : 'dark');
+      document.getElementById('themeLabel').textContent = dark ? 'LIGHT' : 'DARK';
+    });
+
+    /* ── waveform decoration ── */
+    const wf = document.getElementById('waveform');
+    for (let i = 0; i < 42; i++) {
+      const b = document.createElement('div');
+      b.className = 'wave-bar';
+      const h = 4 + Math.random() * 22;
+      const d = (0.4 + Math.random() * 0.8).toFixed(2);
+      b.style.cssText = `--h:${h}px; --d:${d}s; animation-delay:${(Math.random()*.8).toFixed(2)}s`;
+      wf.appendChild(b);
+    }
+
+    /* ── demo transcript ── */
+    // const demoText = ` Thank you for using SharkAttack.`;
+
+    /* ── video + transcript loader ── */
+    const videoEl    = document.getElementById('videoEl');
+    const vidHolder  = document.getElementById('vidPlaceholder');
+    const scrubber   = document.getElementById('scrubber');
+    const curTime    = document.getElementById('curTime');
+    const durTime    = document.getElementById('durTime');
+    const transcriptContent = document.getElementById('transcriptContent');
+    const transcriptPlaceholder = document.getElementById('transcriptPlaceholder');
+    const wordCountBadge = document.getElementById('wordCountBadge');
+
+    function fmtTime(s) {
+      const m = Math.floor(s/60), sec = Math.floor(s%60);
+      return `${m}:${sec.toString().padStart(2,'0')}`;
+    }
+
+    function loadVideo(file) {
+      const url = URL.createObjectURL(file);
+      videoEl.src = url;
+      videoEl.style.display = 'block';
+      vidHolder.style.display = 'none';
+      videoEl.play();
+      showTranscript();
+    }
+
+    function showTranscript() {
+      transcriptPlaceholder.style.display = 'none';
+      transcriptContent.style.display = 'block';
+      const words = demoText.split(' ');
+      wordCountBadge.textContent = `${words.length} words`;
+      document.getElementById('totalWords').textContent = words.length;
+      transcriptContent.innerHTML = words.map((w,i) =>
+        `<span class="word" data-i="${i}">${w} </span>`
+      ).join('');
+      // animate accuracy bar
+      setTimeout(() => document.getElementById('accBar').style.width = '97%', 300);
+    }
+
+    /* scrubber sync */
+    videoEl.addEventListener('timeupdate', () => {
+      const pct = videoEl.duration ? (videoEl.currentTime / videoEl.duration) * 100 : 0;
+      scrubber.value = pct;
+      curTime.textContent = fmtTime(videoEl.currentTime);
+      // highlight words proportionally
+      const words = transcriptContent.querySelectorAll('.word');
+      const active = Math.floor((videoEl.currentTime / (videoEl.duration || 1)) * words.length);
+      words.forEach((w,i) => w.classList.toggle('active', i === active));
+    });
+    videoEl.addEventListener('loadedmetadata', () => {
+      durTime.textContent = fmtTime(videoEl.duration);
+      document.getElementById('duration').textContent = fmtTime(videoEl.duration);
+    });
+    scrubber.addEventListener('input', () => {
+      if (videoEl.duration) videoEl.currentTime = (scrubber.value / 100) * videoEl.duration;
+    });
+
+    /* accuracy bar on page load (demo) */
+    window.addEventListener('load', () => {
+      setTimeout(() => document.getElementById('accBar').style.width = '97%', 600);
+    });
+
+    /* ── action buttons ── */
+    const toast = document.getElementById('toast');
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2600);
+    }
+
+    document.getElementById('btnCopy').addEventListener('click', () => {
+      const txt = transcriptContent.textContent.trim() || demoText;
+      navigator.clipboard.writeText(txt).then(() => showToast('✓ Transcript copied!')).catch(() => showToast('Copy failed'));
+    });
+
+    document.getElementById('btnReupload').addEventListener('click', () => {
+      document.getElementById('hiddenFileInput').click();
+    });
+    document.getElementById('hiddenFileInput').addEventListener('change', e => {
+      if (e.target.files[0]) loadVideo(e.target.files[0]);
+    });
+
+    document.getElementById('btnMakeVideo').addEventListener('click', () => {
+      showToast('🎬 Generating captioned video…');
+    });
+    /* ── auto-load from homepage ── */
+window.addEventListener('load', () => {
+  const data = sessionStorage.getItem('videoData');
+  const name = sessionStorage.getItem('videoName');
+  if (data) {
+    videoEl.src = data;
+    videoEl.style.display = 'block';
+    vidHolder.style.display = 'none';
+    videoEl.play();
+    showTranscript();
+    sessionStorage.removeItem('videoData');
+    sessionStorage.removeItem('videoName');
+    sessionStorage.removeItem('videoType');
+  }
+});
+    /* ── drag-drop on video wrap ── */
+    const vw = document.getElementById('videoWrap');
+    vw.addEventListener('dragover', e => { e.preventDefault(); vw.style.borderColor = 'var(--accent)'; });
+    vw.addEventListener('dragleave', () => vw.style.borderColor = '');
+    vw.addEventListener('drop', e => {
+      e.preventDefault(); vw.style.borderColor = '';
+      const f = e.dataTransfer.files[0];
+      if (f && f.type.startsWith('video/')) loadVideo(f);
+    });
+    vw.addEventListener('click', () => {
+      if (!videoEl.src) document.getElementById('hiddenFileInput').click();
+    });
+    vw.style.cursor = 'pointer';
+  </script>
+</body>
+</html>

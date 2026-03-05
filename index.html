@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Video to Text – SharkAttack</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0c10;
+      --surface: #111318;
+      --surface2: #1a1d26;
+      --border: rgba(255,255,255,0.08);
+      --accent: #00d4ff;
+      --accent2: #0085ff;
+      --text: #f0f4ff;
+      --muted: #6b7490;
+      --shark: #00d4ff;
+    }
+
+    [data-theme="light"] {
+      --bg: #f0f4ff;
+      --surface: #ffffff;
+      --surface2: #e8edf8;
+      --border: rgba(0,0,0,0.10);
+      --accent: #0060d0;
+      --accent2: #003fa3;
+      --text: #0a0c20;
+      --muted: #7a83a6;
+      --shark: #0060d0;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.4s, color 0.4s;
+      overflow-x: hidden;
+    }
+
+    /* ── animated mesh background ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 20%, rgba(0,212,255,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 50% at 80% 80%, rgba(0,133,255,0.07) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── grid overlay ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    /* ── layout ── */
+    .page {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 24px 80px;
+    }
+
+    /* ── top-left toggle ── */
+    .theme-toggle {
+      position: fixed;
+      top: 24px;
+      left: 24px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      padding: 8px 16px 8px 10px;
+      cursor: pointer;
+      transition: background 0.3s, border 0.3s, box-shadow 0.3s;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .theme-toggle:hover {
+      box-shadow: 0 0 0 1px var(--accent), 0 4px 24px rgba(0,212,255,0.15);
+    }
+    .toggle-track {
+      width: 36px; height: 20px;
+      background: var(--surface2);
+      border-radius: 20px;
+      position: relative;
+      border: 1px solid var(--border);
+      transition: background 0.3s;
+    }
+    .toggle-thumb {
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      transition: transform 0.3s, background 0.3s;
+    }
+    [data-theme="light"] .toggle-thumb { transform: translateX(16px); }
+    .toggle-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      transition: color 0.3s;
+      user-select: none;
+    }
+
+    /* ── hero title ── */
+    .hero {
+      text-align: center;
+      margin-bottom: 48px;
+      animation: fadeUp 0.7s ease both;
+    }
+    .title-eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+    .title-main {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(64px, 10vw, 120px);
+      line-height: 0.9;
+      letter-spacing: 0.02em;
+      background: linear-gradient(135deg, var(--text) 40%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .title-sub {
+      font-size: 15px;
+      color: var(--muted);
+      margin-top: 16px;
+      font-weight: 300;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── upload card ── */
+    .card {
+      width: 100%;
+      max-width: 600px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+      animation: fadeUp 0.7s 0.15s ease both;
+      transition: background 0.4s, border 0.4s;
+    }
+
+    /* ── drop zone ── */
+    .drop-zone {
+      width: 100%;
+      aspect-ratio: 16/9;
+      border: 2px dashed var(--border);
+      border-radius: 14px;
+      background: var(--surface2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s, background 0.3s;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--accent);
+      background: rgba(0,212,255,0.05);
+    }
+    .drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .drop-icon {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 30px rgba(0,212,255,0.3);
+    }
+    .drop-icon svg { width: 24px; height: 24px; fill: #fff; }
+    .drop-text { font-size: 14px; color: var(--muted); text-align: center; line-height: 1.5; }
+    .drop-text strong { color: var(--accent); font-weight: 600; }
+
+    /* video preview */
+    #videoPreview {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+      border-radius: 12px;
+    }
+    .drop-zone.has-video .drop-icon,
+    .drop-zone.has-video .drop-text { display: none; }
+    .drop-zone.has-video #videoPreview { display: block; }
+
+    /* ── filename badge ── */
+    .file-badge {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      margin-top: 14px;
+      font-size: 13px;
+      color: var(--muted);
+      animation: fadeUp 0.3s ease both;
+    }
+    .file-badge.visible { display: flex; }
+    .file-badge svg { width: 14px; height: 14px; flex-shrink: 0; }
+    .file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+    .file-remove {
+      cursor: pointer; color: var(--muted); font-size: 16px; line-height: 1;
+      transition: color 0.2s;
+    }
+    .file-remove:hover { color: #ff4f6b; }
+
+    /* ── action row ── */
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .btn {
+      flex: 1;
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      border: none;
+      transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn:active { transform: scale(0.97); }
+
+
+
+    .btn-submit {
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      color: #fff;
+      box-shadow: 0 6px 24px rgba(0,212,255,0.25);
+    }
+    .btn-submit:hover {
+      box-shadow: 0 8px 32px rgba(0,212,255,0.45);
+      transform: translateY(-1px);
+    }
+    .btn-submit:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* ripple */
+    .btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.08);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .btn:hover::after { opacity: 1; }
+
+    /* ── bottom-left team name ── */
+    .team-tag {
+      position: fixed;
+      bottom: 24px;
+      left: 28px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 100;
+    }
+    .shark-icon {
+      font-size: 18px;
+      filter: drop-shadow(0 0 6px var(--shark));
+      animation: swim 3s ease-in-out infinite;
+    }
+    .team-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      letter-spacing: 0.15em;
+      color: var(--shark);
+      text-shadow: 0 0 12px rgba(0,212,255,0.4);
+      transition: color 0.4s;
+    }
+
+    /* ── animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes swim {
+      0%, 100% { transform: translateX(0) rotate(0deg); }
+      50%       { transform: translateX(4px) rotate(4deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Light/Dark toggle -->
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+    <div class="toggle-track"><div class="toggle-thumb"></div></div>
+    <span class="toggle-label" id="themeLabel">Dark</span>
+  </button>
+
+  <!-- Main content -->
+  <main class="page">
+    <div class="hero">
+      <p class="title-eyebrow">AI-Powered Transcription</p>
+      <h1 class="title-main">Video<br>to Text</h1>
+      <p class="title-sub">Drop a video. Get your transcript instantly.</p>
+    </div>
+
+    <div class="card">
+      <!-- Drop / preview zone -->
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" accept="video/*" />
+        <video id="videoPreview" controls></video>
+        <div class="drop-icon">
+          <svg viewBox="0 0 24 24"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+        </div>
+        <div class="drop-text">
+          <strong>Click to browse</strong> or drag & drop<br/>
+          MP4, MOV, AVI, MKV supported
+        </div>
+      </div>
+
+      <!-- File badge -->
+      <div class="file-badge" id="fileBadge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        <span class="file-name" id="fileName">—</span>
+        <span class="file-remove" id="fileRemove" title="Remove">✕</span>
+      </div>
+
+      <!-- Actions -->
+      <div class="actions">
+        <!-- <button class="btn btn-upload" id="btnUpload" onclick="document.getElementById('fileInput').click()">
+          ⬆ Upload
+        </button> -->
+        <button class="btn btn-submit" id="btnSubmit" disabled>
+          ✦ Submit
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Team name -->
+  <div class="team-tag">
+    <span class="shark-icon">🦈</span>
+    <span class="team-name">SharkAttack</span>
+  </div>
+
+  <script>
+    /* ── Theme toggle ── */
+    const html = document.documentElement;
+    const toggleBtn = document.getElementById('themeToggle');
+    const themeLabel = document.getElementById('themeLabel');
+
+    toggleBtn.addEventListener('click', () => {
+      const isDark = html.getAttribute('data-theme') === 'dark';
+      html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      themeLabel.textContent = isDark ? 'Light' : 'Dark';
+    });
+
+    /* ── File handling ── */
+    const fileInput   = document.getElementById('fileInput');
+    const dropZone    = document.getElementById('dropZone');
+    const videoPreview= document.getElementById('videoPreview');
+    const fileBadge   = document.getElementById('fileBadge');
+    const fileName    = document.getElementById('fileName');
+    const fileRemove  = document.getElementById('fileRemove');
+    const btnSubmit   = document.getElementById('btnSubmit');
+
+    function loadFile(file) {
+      if (!file || !file.type.startsWith('video/')) return;
+      const url = URL.createObjectURL(file);
+      videoPreview.src = url;
+      dropZone.classList.add('has-video');
+      fileName.textContent = file.name;
+      fileBadge.classList.add('visible');
+      btnSubmit.disabled = false;
+    }
+
+    fileInput.addEventListener('change', e => loadFile(e.target.files[0]));
+
+    /* drag & drop */
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      loadFile(e.dataTransfer.files[0]);
+    });
+
+    /* remove file */
+    fileRemove.addEventListener('click', e => {
+      e.stopPropagation();
+      videoPreview.src = '';
+      fileInput.value = '';
+      dropZone.classList.remove('has-video');
+      fileBadge.classList.remove('visible');
+      btnSubmit.disabled = true;
+    });
+
+    /* submit */
+   btnSubmit.addEventListener('click', () => {
+  if (btnSubmit.disabled) return;
+  btnSubmit.textContent = '⏳ Processing…';
+  btnSubmit.disabled = true;
+
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+  reader.onload = () => {
+    sessionStorage.setItem('videoData', reader.result);
+    sessionStorage.setItem('videoName', file.name);
+    sessionStorage.setItem('videoType', file.type);
+    window.location.href = 'result.html';
+  };
+  reader.readAsDataURL(file);
+});
+  </script>
+</body>
+</html>
