@@ -7,545 +7,411 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg:        #080b12;
-      --panel:     #0e1320;
-      --surface:   #131929;
-      --surface2:  #1c2438;
-      --border:    rgba(255,255,255,0.07);
-      --border-hi: rgba(0,220,255,0.35);
-      --accent:    #00dcff;
-      --accent2:   #0078ff;
-      --green:     #00e897;
-      --yellow:    #ffd166;
-      --red:       #ff4f6b;
-      --text:      #e8f0ff;
-      --muted:     #5a6585;
-      --mono:      'JetBrains Mono', monospace;
+      --bg:#080b12; --panel:#0e1320; --surface:#131929; --surface2:#1c2438;
+      --border:rgba(255,255,255,0.07); --border-hi:rgba(0,220,255,0.35);
+      --accent:#00dcff; --accent2:#0078ff; --green:#00e897; --yellow:#ffd166;
+      --purple:#a78bfa; --text:#e8f0ff; --muted:#5a6585;
+      --mono:'JetBrains Mono', monospace;
     }
     [data-theme="light"] {
-      --bg:        #edf1fb;
-      --panel:     #ffffff;
-      --surface:   #f4f7ff;
-      --surface2:  #e4eaf8;
-      --border:    rgba(0,0,0,0.08);
-      --border-hi: rgba(0,100,220,0.35);
-      --accent:    #0060d0;
-      --accent2:   #003fa3;
-      --green:     #00a86b;
-      --text:      #0a0f24;
-      --muted:     #8892b0;
+      --bg:#edf1fb; --panel:#ffffff; --surface:#f4f7ff; --surface2:#e4eaf8;
+      --border:rgba(0,0,0,0.08); --border-hi:rgba(0,100,220,0.35);
+      --accent:#0060d0; --accent2:#003fa3; --green:#00a86b;
+      --yellow:#d97706; --purple:#7c3aed; --text:#0a0f24; --muted:#8892b0;
     }
+    html,body { min-height:100%; font-family:'Syne',sans-serif; background:var(--bg); color:var(--text); transition:background .4s,color .4s; }
+    body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+      background: radial-gradient(ellipse 60% 50% at 15% 15%,rgba(0,220,255,.07) 0%,transparent 60%),
+                  radial-gradient(ellipse 50% 60% at 85% 85%,rgba(0,120,255,.07) 0%,transparent 60%); }
+    body::after { content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+      background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+      background-size:52px 52px; opacity:.3; }
 
-    html, body { height: 100%; font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); transition: background .4s, color .4s; }
+    header { position:fixed; top:0; left:0; right:0; z-index:200; height:58px;
+      display:flex; align-items:center; justify-content:space-between; padding:0 32px;
+      background:rgba(8,11,18,.8); backdrop-filter:blur(16px); border-bottom:1px solid var(--border); }
+    [data-theme="light"] header { background:rgba(237,241,251,.88); }
+    .logo { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:.14em;
+      background:linear-gradient(135deg,var(--text) 30%,var(--accent));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .header-right { display:flex; align-items:center; gap:12px; }
+    .back-btn { font-size:12px; font-weight:600; letter-spacing:.06em; color:var(--muted);
+      background:var(--surface); border:1px solid var(--border); border-radius:8px;
+      padding:6px 14px; cursor:pointer; text-decoration:none; transition:color .2s,border-color .2s; }
+    .back-btn:hover { color:var(--accent); border-color:var(--border-hi); }
+    .theme-toggle { display:flex; align-items:center; gap:8px; background:var(--surface);
+      border:1px solid var(--border); border-radius:50px; padding:6px 14px 6px 9px;
+      cursor:pointer; transition:box-shadow .25s; }
+    .theme-toggle:hover { box-shadow:0 0 0 1px var(--accent); }
+    .toggle-track { width:32px; height:18px; background:var(--surface2); border-radius:18px; position:relative; border:1px solid var(--border); }
+    .toggle-thumb { position:absolute; top:2px; left:2px; width:12px; height:12px; border-radius:50%; background:var(--accent); transition:transform .3s; }
+    [data-theme="light"] .toggle-thumb { transform:translateX(14px); }
+    .toggle-lbl { font-size:12px; font-weight:600; color:var(--muted); letter-spacing:.05em; user-select:none; }
 
-    /* ── mesh bg ── */
-    body::before {
-      content: '';
-      position: fixed; inset: 0; pointer-events: none; z-index: 0;
-      background:
-        radial-gradient(ellipse 55% 45% at 10% 10%, rgba(0,220,255,.06) 0%, transparent 60%),
-        radial-gradient(ellipse 50% 60% at 90% 90%, rgba(0,120,255,.06) 0%, transparent 60%);
-    }
-    body::after {
-      content: '';
-      position: fixed; inset: 0; pointer-events: none; z-index: 0;
-      background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
-      background-size: 52px 52px;
-      opacity: .35;
-    }
+    .page { position:relative; z-index:1; max-width:1200px; margin:0 auto; padding:80px 24px 60px; }
 
-    /* ── chrome ── */
-    header {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
-      height: 56px;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 24px;
-      background: rgba(8,11,18,.7);
-      backdrop-filter: blur(14px);
-      border-bottom: 1px solid var(--border);
-      transition: background .4s, border .4s;
-    }
-    [data-theme="light"] header { background: rgba(237,241,251,.8); }
+    .page-title { text-align:center; margin-bottom:28px; animation:fadeUp .6s ease both; }
+    .page-title .eyebrow { font-size:11px; letter-spacing:.3em; text-transform:uppercase; color:var(--accent); margin-bottom:8px; font-weight:600; }
+    .page-title h1 { font-family:'Bebas Neue',sans-serif; font-size:clamp(34px,5vw,52px); letter-spacing:.08em;
+      background:linear-gradient(135deg,var(--text) 50%,var(--accent));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
 
-    .logo {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 22px; letter-spacing: .12em;
-      background: linear-gradient(135deg, var(--text) 30%, var(--accent));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    }
+    /* stat strip */
+    .stat-strip { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; animation:fadeUp .6s .1s ease both; }
+    .stat-card { background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:16px 18px; display:flex; flex-direction:column; gap:4px; transition:border-color .2s; }
+    .stat-card:hover { border-color:var(--border-hi); }
+    .s-label { font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+    .s-value { font-family:'Bebas Neue',sans-serif; font-size:30px; line-height:1; color:var(--text); }
+    .s-value.green { color:var(--green); text-shadow:0 0 20px rgba(0,232,151,.25); }
+    .s-value.blue  { color:var(--accent); text-shadow:0 0 20px rgba(0,220,255,.25); }
+    .s-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+    .acc-track { width:100%; height:4px; background:var(--surface2); border-radius:4px; overflow:hidden; margin-top:8px; }
+    .acc-fill { height:100%; width:0%; background:linear-gradient(90deg,var(--accent2),var(--green)); border-radius:4px; transition:width 1.6s cubic-bezier(.22,1,.36,1); }
 
-    .theme-toggle {
-      display: flex; align-items: center; gap: 9px;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 50px; padding: 6px 14px 6px 9px;
-      cursor: pointer; transition: box-shadow .25s;
-    }
-    .theme-toggle:hover { box-shadow: 0 0 0 1px var(--accent); }
-    .toggle-track { width: 32px; height: 18px; background: var(--surface2); border-radius: 18px; position: relative; border: 1px solid var(--border); }
-    .toggle-thumb { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); transition: transform .3s; }
-    [data-theme="light"] .toggle-thumb { transform: translateX(14px); }
-    .toggle-lbl { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .05em; user-select: none; }
+    /* top grid */
+    .top-grid { display:grid; grid-template-columns:400px 1fr; gap:20px; margin-bottom:20px; animation:fadeUp .6s .2s ease both; }
 
-    .team-tag {
-      position: fixed; bottom: 20px; left: 22px; z-index: 200;
-      display: flex; align-items: center; gap: 7px;
-    }
-    .shark { font-size: 16px; animation: swim 3s ease-in-out infinite; }
-    .team-name { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: .18em; color: var(--accent); text-shadow: 0 0 10px rgba(0,220,255,.4); }
+    .panel { background:var(--panel); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+    .panel-header { display:flex; align-items:center; gap:10px; padding:14px 18px; border-bottom:1px solid var(--border); }
+    .panel-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .panel-dot.blue   { background:var(--accent); box-shadow:0 0 8px var(--accent); }
+    .panel-dot.green  { background:var(--green);  box-shadow:0 0 8px var(--green); }
+    .panel-dot.yellow { background:var(--yellow); box-shadow:0 0 8px var(--yellow); }
+    .panel-title { font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:.1em; }
+    .panel-badge { margin-left:auto; font-size:11px; font-weight:600; letter-spacing:.07em; text-transform:uppercase;
+      padding:3px 10px; border-radius:20px; background:var(--surface2); color:var(--muted); border:1px solid var(--border); }
+
+    /* video */
+    .video-body { padding:14px; }
+    .video-wrap { width:100%; aspect-ratio:16/9; background:#000; border-radius:10px; overflow:hidden; border:1px solid var(--border); position:relative; }
+    .video-wrap video { width:100%; height:100%; object-fit:cover; display:block; }
+    .video-placeholder { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; background:var(--surface); }
+    .play-ring { width:54px; height:54px; border-radius:50%; border:2px solid var(--border-hi); display:flex; align-items:center; justify-content:center; animation:pulse 2s ease-in-out infinite; }
+    .play-ring svg { width:20px; height:20px; fill:var(--accent); margin-left:3px; }
+    @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(0,220,255,.3)} 50%{box-shadow:0 0 0 14px rgba(0,220,255,0)} }
+    .placeholder-txt { font-size:12px; color:var(--muted); }
+    .video-meta { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+    .meta-chip { font-size:11px; font-weight:600; color:var(--muted); background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:4px 10px; display:flex; align-items:center; gap:5px; }
+    .meta-chip .dot { width:5px; height:5px; border-radius:50%; background:var(--accent); }
+
+    /* segment list */
+    .waveform { display:flex; align-items:flex-end; gap:2px; height:28px; padding:0 16px; border-bottom:1px solid var(--border); background:var(--surface); }
+    .wave-bar { width:3px; border-radius:3px; background:var(--accent); animation:wave var(--d,.8s) ease-in-out infinite alternate; opacity:.4; }
+    @keyframes wave { from{height:3px} to{height:var(--h,18px)} }
+
+    .seg-list-scroll { overflow-y:auto; max-height:296px; padding:8px; }
+    .seg-list-scroll::-webkit-scrollbar { width:4px; }
+    .seg-list-scroll::-webkit-scrollbar-thumb { background:var(--surface2); border-radius:4px; }
+
+    .seg-pill { display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:10px;
+      margin-bottom:6px; border:1px solid var(--border); background:var(--surface);
+      cursor:pointer; transition:border-color .2s,background .2s; }
+    .seg-pill:hover,.seg-pill.active { border-color:var(--border-hi); background:var(--surface2); }
+    .seg-pill .ts { font-family:var(--mono); font-size:10px; color:var(--accent); white-space:nowrap; opacity:.8; }
+    .seg-pill .seg-txt { font-size:13px; color:var(--text); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .seg-pill .arrow { color:var(--muted); font-size:11px; flex-shrink:0; transition:color .2s; }
+    .seg-pill:hover .arrow,.seg-pill.active .arrow { color:var(--accent); }
+
+    /* scene detail */
+    .scene-detail { animation:fadeUp .6s .25s ease both; }
+    .scene-body { padding:20px; }
+    .scene-audio { font-family:var(--mono); font-size:14px; background:var(--surface);
+      border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:16px; line-height:1.6; }
+    .audio-label { font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+
+    .scene-fields { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+    .field-chip { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; transition:border-color .2s; }
+    .field-chip:hover { border-color:var(--border-hi); }
+    .field-label { font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; margin-bottom:5px; }
+    .field-label.action     { color:var(--accent); }
+    .field-label.camera     { color:var(--green); }
+    .field-label.emotion    { color:var(--yellow); }
+    .field-label.atmosphere { color:var(--purple); }
+    .field-value { font-size:12.5px; color:var(--text); line-height:1.5; }
+    .context-chip { margin-top:0; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; grid-column:span 2; }
+    .context-chip .field-label { color:var(--muted); }
+    .context-chip .field-value { font-size:13px; color:var(--muted); font-style:italic; line-height:1.6; }
+
+    .scene-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; height:180px; color:var(--muted); font-size:13px; }
+
+    /* action bar */
+    .action-bar { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:20px; animation:fadeUp .6s .35s ease both; }
+    .act-btn { display:flex; align-items:center; justify-content:center; gap:10px; padding:16px 20px;
+      background:var(--panel); border:1px solid var(--border); border-radius:14px;
+      cursor:pointer; font-family:'Syne',sans-serif; font-size:13px; font-weight:700;
+      letter-spacing:.05em; color:var(--muted); transition:border-color .2s,color .2s,box-shadow .2s,transform .15s; }
+    .act-btn:hover { transform:translateY(-2px); }
+    .act-btn .ico { font-size:20px; }
+    .act-btn.make-video:hover { border-color:var(--accent); color:var(--accent); box-shadow:0 4px 24px rgba(0,220,255,.12); }
+    .act-btn.copy-btn:hover   { border-color:var(--green);  color:var(--green);  box-shadow:0 4px 24px rgba(0,232,151,.12); }
+    .act-btn.reupload:hover   { border-color:var(--yellow); color:var(--yellow); box-shadow:0 4px 24px rgba(255,209,102,.12); }
+
+    .toast { position:fixed; bottom:28px; right:28px; z-index:400; background:var(--panel);
+      border:1px solid var(--border-hi); border-radius:12px; padding:13px 22px;
+      font-size:13px; font-weight:600; color:var(--accent); box-shadow:0 8px 32px rgba(0,0,0,.4);
+      transform:translateY(80px); opacity:0; transition:transform .35s,opacity .35s; pointer-events:none; }
+    .toast.show { transform:translateY(0); opacity:1; }
+
+    .team-tag { position:fixed; bottom:20px; left:22px; z-index:200; display:flex; align-items:center; gap:7px; }
+    .shark { font-size:16px; animation:swim 3s ease-in-out infinite; }
+    .team-name { font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:.18em; color:var(--accent); text-shadow:0 0 10px rgba(0,220,255,.4); }
     @keyframes swim { 0%,100%{transform:translateX(0) rotate(0)} 50%{transform:translateX(4px) rotate(5deg)} }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
 
-    /* ── main grid ── */
-    .workspace {
-      position: relative; z-index: 1;
-      min-height: 100vh;
-      padding: 76px 24px 48px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: auto 1fr auto;
-      gap: 0 20px;
-      max-width: 1280px;
-      margin: 0 auto;
-    }
-
-    /* col headers */
-    .col-header {
-      padding: 18px 0 12px;
-      display: flex; align-items: center; gap: 10px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 16px;
-      animation: fadeUp .6s ease both;
-    }
-    .col-header.right { animation-delay: .1s; }
-    .col-dot { width: 8px; height: 8px; border-radius: 50%; }
-    .col-dot.blue { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
-    .col-dot.green { background: var(--green); box-shadow: 0 0 8px var(--green); }
-    .col-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: .12em; color: var(--text); }
-    .col-badge { margin-left: auto; font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
-
-    /* ── video panel ── */
-    .video-panel {
-      grid-column: 1; grid-row: 2;
-      display: flex; flex-direction: column; gap: 0;
-      animation: fadeUp .6s .05s ease both;
-    }
-    .video-wrap {
-      width: 100%; aspect-ratio: 16/9;
-      background: #000;
-      border-radius: 14px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      position: relative;
-      box-shadow: 0 20px 60px rgba(0,0,0,.5);
-    }
-    .video-wrap video { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .video-placeholder {
-      position: absolute; inset: 0;
-      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
-      background: var(--surface);
-    }
-    .play-ring {
-      width: 64px; height: 64px; border-radius: 50%;
-      border: 2px solid var(--border-hi);
-      display: flex; align-items: center; justify-content: center;
-      animation: pulse 2s ease-in-out infinite;
-    }
-    .play-ring svg { width: 24px; height: 24px; fill: var(--accent); margin-left: 3px; }
-    @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(0,220,255,.3)} 50%{box-shadow:0 0 0 12px rgba(0,220,255,0)} }
-    .placeholder-txt { font-size: 13px; color: var(--muted); letter-spacing: .04em; }
-
-    /* timeline scrubber 
-    .scrubber-row {
-      display: flex; align-items: center; gap: 10px;
-      margin-top: 12px;
-    }
-    .time-label { font-family: var(--mono); font-size: 11px; color: var(--muted); min-width: 38px; }
-    .scrubber {
-      flex: 1; -webkit-appearance: none; height: 4px;
-      background: var(--surface2); border-radius: 4px; outline: none; cursor: pointer;
-      transition: height .2s;
-    }
-    .scrubber:hover { height: 6px; }
-    .scrubber::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px rgba(0,220,255,.6); cursor: pointer; }
-
-    /* ── accuracy card ── */
-    .accuracy-card {
-      grid-column: 1; grid-row: 3;
-      margin-top: 20px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 20px 24px;
-      animation: fadeUp .6s .2s ease both;
-      transition: background .4s;
-    }
-    .acc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-    .acc-label { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
-    .acc-value { font-family: 'Bebas Neue', sans-serif; font-size: 38px; line-height: 1; color: var(--green); text-shadow: 0 0 20px rgba(0,232,151,.3); }
-    .acc-unit { font-size: 18px; color: var(--muted); }
-
-    .acc-bar-track {
-      width: 100%; height: 8px; background: var(--surface2); border-radius: 8px; overflow: hidden; margin-bottom: 14px;
-    }
-    .acc-bar-fill {
-      height: 100%; width: 0%;
-      background: linear-gradient(90deg, var(--accent2), var(--green));
-      border-radius: 8px;
-      transition: width 1.4s cubic-bezier(.22,1,.36,1);
-      box-shadow: 0 0 12px rgba(0,232,151,.4);
-    }
-
-    .acc-stats { display: grid; grid-template-columns: 1fr; gap: 12px; }
-    .stat-chip {
-      background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
-      padding: 10px 12px; text-align: center;
-    }
-    .stat-num { font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--text); }
-    .stat-lbl { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
-
-    /* ── transcript panel ── */
-    .transcript-panel {
-      grid-column: 2; grid-row: 2;
-      display: flex; flex-direction: column;
-      animation: fadeUp .6s .1s ease both;
-    }
-    .transcript-box {
-      flex: 1;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 20px;
-      overflow-y: auto;
-      max-height: 380px;
-      min-height: 200px;
-      font-family: var(--mono);
-      font-size: 13.5px;
-      line-height: 1.85;
-      color: var(--text);
-      transition: background .4s, border .4s;
-      position: relative;
-    }
-    .transcript-box::-webkit-scrollbar { width: 4px; }
-    .transcript-box::-webkit-scrollbar-track { background: transparent; }
-    .transcript-box::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 4px; }
-
-    /* word highlight */
-    .word { display: inline; transition: background .15s, color .15s; border-radius: 3px; padding: 0 2px; cursor: default; }
-    .word:hover { background: rgba(0,220,255,.15); color: var(--accent); }
-    .word.active { background: rgba(0,220,255,.22); color: var(--accent); }
-
-    .transcript-placeholder {
-      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-      flex-direction: column; gap: 10px;
-    }
-    .tp-icon { font-size: 32px; opacity: .25; }
-    .tp-txt { font-size: 13px; color: var(--muted); font-family: 'Syne', sans-serif; }
-
-    /* waveform decoration */
-    .waveform {
-      display: flex; align-items: flex-end; gap: 2px; height: 28px; margin-bottom: 10px;
-    }
-    .wave-bar {
-      width: 3px; border-radius: 3px; background: var(--accent);
-      animation: wave var(--d, .8s) ease-in-out infinite alternate;
-      opacity: .5;
-    }
-    @keyframes wave { from{height:4px} to{height:var(--h,20px)} }
-
-    /* ── action row ── */
-    .actions-panel {
-      grid-column: 2; grid-row: 3;
-      margin-top: 20px;
-      animation: fadeUp .6s .3s ease both;
-      display: flex; flex-direction: column; gap: 12px;
-    }
-    .actions-row {
-      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
-    }
-    .act-btn {
-      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px;
-      padding: 16px 12px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      cursor: pointer;
-      font-family: 'Syne', sans-serif;
-      font-size: 12px; font-weight: 700;
-      letter-spacing: .06em; text-transform: uppercase;
-      color: var(--muted);
-      transition: border-color .2s, color .2s, box-shadow .2s, transform .15s, background .3s;
-    }
-    .act-btn:hover { transform: translateY(-2px); }
-    .act-btn .ico { font-size: 22px; transition: transform .2s; }
-    .act-btn:hover .ico { transform: scale(1.15); }
-
-    .act-btn.make-video:hover  { border-color: var(--accent);  color: var(--accent);  box-shadow: 0 0 20px rgba(0,220,255,.15); }
-    .act-btn.copy-btn:hover    { border-color: var(--green);   color: var(--green);   box-shadow: 0 0 20px rgba(0,232,151,.15); }
-    .act-btn.reupload:hover    { border-color: var(--yellow);  color: var(--yellow);  box-shadow: 0 0 20px rgba(255,209,102,.15); }
-
-    /* toast */
-    .toast {
-      position: fixed; bottom: 24px; right: 24px; z-index: 300;
-      background: var(--panel); border: 1px solid var(--border-hi);
-      border-radius: 12px; padding: 12px 20px;
-      font-size: 13px; font-weight: 600; color: var(--accent);
-      box-shadow: 0 8px 32px rgba(0,0,0,.4);
-      transform: translateY(80px); opacity: 0;
-      transition: transform .35s, opacity .35s;
-      pointer-events: none;
-    }
-    .toast.show { transform: translateY(0); opacity: 1; }
-
-    /* ── animations ── */
-    @keyframes fadeUp { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
-
-    /* responsive */
-    @media (max-width: 760px) {
-      .workspace { grid-template-columns: 1fr; grid-template-rows: auto; gap: 0; }
-      .col-header.right { grid-row: 4; }
-      .video-panel    { grid-column: 1; grid-row: 2; }
-      .accuracy-card  { grid-column: 1; grid-row: 3; }
-      .transcript-panel { grid-column: 1; grid-row: 5; }
-      .actions-panel  { grid-column: 1; grid-row: 6; }
+    @media (max-width:860px) {
+      .top-grid { grid-template-columns:1fr; }
+      .stat-strip { grid-template-columns:repeat(3,1fr); }
+      .action-bar { grid-template-columns:1fr 1fr; }
+      .scene-fields { grid-template-columns:1fr; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Header -->
-  <header>
-    <span class="logo">Visual Context Extractor</span>
+<header>
+  <span class="logo">Visual Context Extractor</span>
+  <div class="header-right">
+    <a class="back-btn" href="/">← New Video</a>
     <button class="theme-toggle" id="themeToggle">
       <div class="toggle-track"><div class="toggle-thumb"></div></div>
       <span class="toggle-lbl" id="themeLabel">DARK</span>
     </button>
-  </header>
+  </div>
+</header>
 
-  <!-- Team tag -->
-  <div class="team-tag">
-    <span class="shark">🦈</span>
-    <span class="team-name">SharkAttack</span>
+<div class="team-tag"><span class="shark">🦈</span><span class="team-name">SharkAttack</span></div>
+<div class="toast" id="toast"></div>
+
+<div class="page">
+
+  <div class="page-title">
+    <p class="eyebrow">Analysis Complete</p>
+    <h1>Extraction Results</h1>
   </div>
 
-  <!-- Toast -->
-  <div class="toast" id="toast">✓ Copied to clipboard!</div>
-
-  <main class="workspace">
-
-    <!-- LEFT col header -->
-    <div class="col-header" style="grid-column:1; grid-row:1;">
-      <span class="col-dot blue"></span>
-      <span class="col-title">Video Input</span>
-      <span class="col-badge">MP4</span>
+  <div class="stat-strip">
+    <div class="stat-card">
+      <span class="s-label">Accuracy Score</span>
+      <span class="s-value green" id="accDisplay">—</span>
+      <div class="acc-track"><div class="acc-fill" id="accBar"></div></div>
+    </div>
+    <div class="stat-card">
+      <span class="s-label">Word Count</span>
+      <span class="s-value blue" id="wordCount">—</span>
+      <span class="s-sub">words detected</span>
+    </div>
+    <div class="stat-card">
+      <span class="s-label">Segments</span>
+      <span class="s-value" id="segCount">—</span>
+      <span class="s-sub">time segments</span>
     </div>
 
-    <!-- RIGHT col header -->
-    <div class="col-header right" style="grid-column:2; grid-row:1;">
-      <span class="col-dot green"></span>
-      <span class="col-title">Transcript</span>
-      <span class="col-badge" id="wordCountBadge">— words</span>
-    </div>
+  </div>
 
-    <!-- VIDEO PANEL -->
-    <div class="video-panel">
-      <div class="video-wrap" id="videoWrap">
-        <video id="videoEl" style="display:none;" controls></video>
-        <div class="video-placeholder" id="vidPlaceholder">
-          <div class="play-ring">
-            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+  <div class="top-grid">
+
+    <!-- Video -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-dot blue"></span>
+        <span class="panel-title">Video Input</span>
+        <span class="panel-badge">MP4</span>
+      </div>
+      <div class="video-body">
+        <div class="video-wrap">
+          <video id="videoEl" style="display:none;" controls></video>
+          <div class="video-placeholder" id="vidPlaceholder">
+            <div class="play-ring"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+            <p class="placeholder-txt">No video loaded</p>
           </div>
-          <p class="placeholder-txt">No video loaded</p>
         </div>
-        <!-- hidden file input -->
-        <input type="file" id="hiddenFileInput" accept="video/mp4" style="display:none"/>
+        <div class="video-meta" id="videoMeta" style="display:none;">
+          <span class="meta-chip"><span class="dot"></span><span id="metaDur">—</span></span>
+          <span class="meta-chip"><span class="dot"></span>AI Transcribed</span>
+          <span class="meta-chip"><span class="dot"></span>Scene Analysed</span>
+        </div>
       </div>
-      <!-- scrubber -->
-      <!-- <div class="scrubber-row">
-        <span class="time-label" id="curTime">0:00</span>
-        <input type="range" class="scrubber" id="scrubber" min="0" max="100" value="0" step="0.1"/>
-        <span class="time-label" id="durTime">0:00</span>
-      </div>
-    </div> -->
-
-    <!-- ACCURACY CARD -->
-    <div class="accuracy-card">
-      <div class="acc-header">
-        <span class="acc-label">Accuracy Score</span>
-        <span class="acc-value" id="accValue">97<span class="acc-unit">%</span></span>
-      </div>
-      <div class="acc-bar-track"><div class="acc-bar-fill" id="accBar"></div></div>
-    
     </div>
 
-    <!-- TRANSCRIPT PANEL -->
-    <div class="transcript-panel">
+    <!-- Segment list -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-dot green"></span>
+        <span class="panel-title">Segments</span>
+        <span class="panel-badge" id="wordCountBadge">— words</span>
+      </div>
       <div class="waveform" id="waveform"></div>
-      <div class="transcript-box" id="transcriptBox">
-        <div class="transcript-placeholder" id="transcriptPlaceholder">
-          <span class="tp-icon">📄</span>
-          <span class="tp-txt">Transcript will appear here</span>
+      <div class="seg-list-scroll" id="segList">
+        <div class="scene-empty" id="segEmpty">
+          <span style="font-size:24px;opacity:.2;">🎬</span><span>No segments yet</span>
         </div>
-        <div id="transcriptContent" style="display:none;"></div>
       </div>
     </div>
 
-    <!-- ACTION BUTTONS -->
-    <div class="actions-panel">
-      <div class="actions-row">
-        <button class="act-btn make-video" id="btnMakeVideo">
-          <span class="ico">🎬</span>
-          Make a Video
-        </button>
-        <button class="act-btn copy-btn" id="btnCopy">
-          <span class="ico">📋</span>
-          Copy Text
-        </button>
-        <button class="act-btn reupload" id="btnReupload">
-          <span class="ico">🔄</span>
-          Re-upload
-        </button>
+  </div>
+
+  <!-- Scene detail — full width, updates on segment click -->
+  <div class="panel scene-detail" id="sceneDetail">
+    <div class="panel-header">
+      <span class="panel-dot yellow"></span>
+      <span class="panel-title">Scene Analysis</span>
+      <span class="panel-badge" id="sceneTimeBadge">Select a segment ↑</span>
+    </div>
+    <div class="scene-body" id="sceneBody">
+      <div class="scene-empty">
+        <span style="font-size:28px;opacity:.2;">🔍</span>
+        <span>Click any segment above to see its full scene analysis</span>
       </div>
     </div>
+  </div>
 
-  </main>
+  <div class="action-bar">
+    <button class="act-btn make-video" id="btnMakeVideo"><span class="ico">🎬</span> Make a Video</button>
+    <button class="act-btn copy-btn"   id="btnCopy"><span class="ico">📋</span> Copy Transcript</button>
+    <button class="act-btn reupload"   id="btnReupload"><span class="ico">🔄</span> New Upload</button>
+  </div>
 
-  <script>
-    /* ── theme ── */
-    const html = document.documentElement;
-    document.getElementById('themeToggle').addEventListener('click', () => {
-      const dark = html.getAttribute('data-theme') === 'dark';
-      html.setAttribute('data-theme', dark ? 'light' : 'dark');
-      document.getElementById('themeLabel').textContent = dark ? 'LIGHT' : 'DARK';
-    });
+</div>
 
-    /* ── waveform decoration ── */
-    const wf = document.getElementById('waveform');
-    for (let i = 0; i < 42; i++) {
-      const b = document.createElement('div');
-      b.className = 'wave-bar';
-      const h = 4 + Math.random() * 22;
-      const d = (0.4 + Math.random() * 0.8).toFixed(2);
-      b.style.cssText = `--h:${h}px; --d:${d}s; animation-delay:${(Math.random()*.8).toFixed(2)}s`;
-      wf.appendChild(b);
-    }
-
-    /* ── demo transcript ── */
-    // const demoText = ` Thank you for using SharkAttack.`;
-
-    /* ── video + transcript loader ── */
-    const videoEl    = document.getElementById('videoEl');
-    const vidHolder  = document.getElementById('vidPlaceholder');
-    // const scrubber   = document.getElementById('scrubber');
-    const curTime    = document.getElementById('curTime');
-    const durTime    = document.getElementById('durTime');
-    const transcriptContent = document.getElementById('transcriptContent');
-    const transcriptPlaceholder = document.getElementById('transcriptPlaceholder');
-    const wordCountBadge = document.getElementById('wordCountBadge');
-
-    function fmtTime(s) {
-      const m = Math.floor(s/60), sec = Math.floor(s%60);
-      return `${m}:${sec.toString().padStart(2,'0')}`;
-    }
-
-    function loadVideo(file) {
-      const url = URL.createObjectURL(file);
-      videoEl.src = url;
-      videoEl.style.display = 'block';
-      vidHolder.style.display = 'none';
-      videoEl.play();
-      showTranscript();
-    }
-
-    function showTranscript() {
-      transcriptPlaceholder.style.display = 'none';
-      transcriptContent.style.display = 'block';
-      const words = demoText.split(' ');
-      wordCountBadge.textContent = `${words.length} words`;
-      document.getElementById('totalWords').textContent = words.length;
-      transcriptContent.innerHTML = words.map((w,i) =>
-        `<span class="word" data-i="${i}">${w} </span>`
-      ).join('');
-      // animate accuracy bar
-      setTimeout(() => document.getElementById('accBar').style.width = '97%', 300);
-    }
-
-    /* scrubber sync */
-   /* videoEl.addEventListener('timeupdate', () => {
-      const pct = videoEl.duration ? (videoEl.currentTime / videoEl.duration) * 100 : 0;
-      scrubber.value = pct;
-      curTime.textContent = fmtTime(videoEl.currentTime);
-      // highlight words proportionally
-      const words = transcriptContent.querySelectorAll('.word');
-      const active = Math.floor((videoEl.currentTime / (videoEl.duration || 1)) * words.length);
-      words.forEach((w,i) => w.classList.toggle('active', i === active));
-    });
-    videoEl.addEventListener('loadedmetadata', () => {
-      durTime.textContent = fmtTime(videoEl.duration);
-      document.getElementById('duration').textContent = fmtTime(videoEl.duration);
-    });
-    scrubber.addEventListener('input', () => {
-      if (videoEl.duration) videoEl.currentTime = (scrubber.value / 100) * videoEl.duration;
-    }); */
-
-    /* accuracy bar on page load (demo) */
-    window.addEventListener('load', () => {
-      setTimeout(() => document.getElementById('accBar').style.width = '97%', 600);
-    });
-
-    /* ── action buttons ── */
-    const toast = document.getElementById('toast');
-    function showToast(msg) {
-      toast.textContent = msg;
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 2600);
-    }
-
-    document.getElementById('btnCopy').addEventListener('click', () => {
-      const txt = transcriptContent.textContent.trim() || demoText;
-      navigator.clipboard.writeText(txt).then(() => showToast('✓ Transcript copied!')).catch(() => showToast('Copy failed'));
-    });
-
-    document.getElementById('btnReupload').addEventListener('click', () => {
-      document.getElementById('hiddenFileInput').click();
-    });
-    document.getElementById('hiddenFileInput').addEventListener('change', e => {
-      if (e.target.files[0]) loadVideo(e.target.files[0]);
-    });
-
-    document.getElementById('btnMakeVideo').addEventListener('click', () => {
-      showToast('🎬 Generating captioned video…');
-    });
-    /* ── auto-load from homepage ── */
-window.addEventListener('load', () => {
-  const data = sessionStorage.getItem('videoData');
-  const name = sessionStorage.getItem('videoName');
-  if (data) {
-    videoEl.src = data;
-    videoEl.style.display = 'block';
-    vidHolder.style.display = 'none';
-    videoEl.play();
-    showTranscript();
-    sessionStorage.removeItem('videoData');
-    sessionStorage.removeItem('videoName');
-    sessionStorage.removeItem('videoType');
-  }
+<script>
+/* theme */
+const html = document.documentElement;
+document.getElementById('themeToggle').addEventListener('click', () => {
+  const dark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', dark ? 'light' : 'dark');
+  document.getElementById('themeLabel').textContent = dark ? 'LIGHT' : 'DARK';
 });
-    /* ── drag-drop on video wrap ── */
-    const vw = document.getElementById('videoWrap');
-    vw.addEventListener('dragover', e => { e.preventDefault(); vw.style.borderColor = 'var(--accent)'; });
-    vw.addEventListener('dragleave', () => vw.style.borderColor = '');
-    vw.addEventListener('drop', e => {
-      e.preventDefault(); vw.style.borderColor = '';
-      const f = e.dataTransfer.files[0];
-      if (f && f.type === 'video/mp4') loadVideo(f);
-else if (f) alert('Only MP4 files are supported. Please upload a .mp4 file.');
+
+/* waveform */
+const wf = document.getElementById('waveform');
+for (let i = 0; i < 52; i++) {
+  const b = document.createElement('div');
+  b.className = 'wave-bar';
+  b.style.cssText = `--h:${4+Math.random()*20}px;--d:${(0.4+Math.random()*.8).toFixed(2)}s;animation-delay:${(Math.random()*.8).toFixed(2)}s`;
+  wf.appendChild(b);
+}
+
+/* toast */
+const toast = document.getElementById('toast');
+function showToast(msg) { toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),2600); }
+
+/* format time */
+function fmt(s) {
+  return `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(Math.floor((s%3600)/60)).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+}
+
+/* accuracy formula — tune BASE, SEG_BONUS, DENSITY_BONUS */
+function calcAccuracy(segs) {
+  const BASE=88, SEG_BONUS=0.4, DENSITY_BONUS=1.2;
+  const segBonus = Math.min(segs.length * SEG_BONUS, 6);
+  const avg = segs.reduce((s,x)=>s+(x.text||'').split(' ').length,0) / Math.max(segs.length,1);
+  const density = Math.min((avg/8)*DENSITY_BONUS, 5);
+  return Math.min(Math.round(BASE+segBonus+density), 99);
+}
+
+/* render scene detail panel */
+function renderScene(seg) {
+  document.getElementById('sceneTimeBadge').textContent = `${fmt(seg.start)} → ${fmt(seg.end)}`;
+  document.getElementById('sceneBody').innerHTML = `
+    <div class="scene-audio">
+      <div class="audio-label">🎙 Audio</div>
+      <div>${seg.text||'—'}</div>
+    </div>
+    <div class="scene-fields">
+      <div class="field-chip">
+        <div class="field-label action">Action</div>
+        <div class="field-value">${seg.action||'N/A'}</div>
+      </div>
+      <div class="field-chip">
+        <div class="field-label camera">Camera</div>
+        <div class="field-value">${seg.camera||'N/A'}</div>
+      </div>
+      <div class="field-chip">
+        <div class="field-label emotion">Emotion</div>
+        <div class="field-value">${seg.emotion||'N/A'}</div>
+      </div>
+      <div class="field-chip">
+        <div class="field-label atmosphere">Atmosphere</div>
+        <div class="field-value">${seg.atmosphere||'N/A'}</div>
+      </div>
+      <div class="context-chip">
+        <div class="field-label">Context</div>
+        <div class="field-value">${seg.context||'N/A'}</div>
+      </div>
+    </div>`;
+}
+
+/* main */
+let allSegments = [];
+
+window.addEventListener('load', () => {
+  /* video */
+  const videoEl = document.getElementById('videoEl');
+  const videoData = sessionStorage.getItem('videoData');
+  if (videoData) {
+    videoEl.src = videoData;
+    videoEl.style.display = 'block';
+    document.getElementById('vidPlaceholder').style.display = 'none';
+    document.getElementById('videoMeta').style.display = 'flex';
+    videoEl.addEventListener('loadedmetadata', () => {
+      const d = videoEl.duration;
+      document.getElementById('metaDur').textContent =
+        `${Math.floor(d/60)}:${String(Math.floor(d%60)).padStart(2,'0')} duration`;
     });
-    vw.addEventListener('click', () => {
-      if (!videoEl.src) document.getElementById('hiddenFileInput').click();
+  }
+
+  /* transcript — now array of rich objects */
+  const raw = sessionStorage.getItem('transcript');
+  if (!raw) return;
+  allSegments = JSON.parse(raw);
+  if (!allSegments || !allSegments.length) return;
+
+  /* stats */
+  let totalWords = 0;
+  allSegments.forEach(s => totalWords += (s.text||'').split(' ').filter(Boolean).length);
+  document.getElementById('wordCountBadge').textContent = `${totalWords} words`;
+  document.getElementById('wordCount').textContent = totalWords;
+  document.getElementById('segCount').textContent   = allSegments.length;
+
+  const acc = calcAccuracy(allSegments);
+  document.getElementById('accDisplay').textContent = acc + '%';
+  setTimeout(() => { document.getElementById('accBar').style.width = acc + '%'; }, 500);
+
+  /* build segment pills */
+  const segList = document.getElementById('segList');
+  document.getElementById('segEmpty').style.display = 'none';
+
+  allSegments.forEach((seg, i) => {
+    const pill = document.createElement('div');
+    pill.className = 'seg-pill';
+    pill.innerHTML = `
+      <span class="ts">${fmt(seg.start)} → ${fmt(seg.end)}</span>
+      <span class="seg-txt">${seg.text||'—'}</span>
+      <span class="arrow">▶</span>`;
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.seg-pill').forEach(p=>p.classList.remove('active'));
+      pill.classList.add('active');
+      renderScene(seg);
+      if (videoEl.src) videoEl.currentTime = seg.start;
     });
-    vw.style.cursor = 'pointer';
-  </script>
+    segList.appendChild(pill);
+    if (i === 0) { pill.classList.add('active'); renderScene(seg); }
+  });
+});
+
+/* copy — exports full scene data */
+document.getElementById('btnCopy').addEventListener('click', () => {
+  const lines = allSegments.map(s =>
+    `[${fmt(s.start)} --> ${fmt(s.end)}]  ${s.text}\n  ACTION:      ${s.action||'N/A'}\n  CAMERA:      ${s.camera||'N/A'}\n  EMOTION:     ${s.emotion||'N/A'}\n  ATMOSPHERE:  ${s.atmosphere||'N/A'}\n  CONTEXT:     ${s.context||'N/A'}`
+  ).join('\n\n');
+  navigator.clipboard.writeText(lines)
+    .then(()=>showToast('✓ Full scene data copied!'))
+    .catch(()=>showToast('Copy failed'));
+});
+
+document.getElementById('btnReupload').addEventListener('click', () => window.location.href = '/');
+document.getElementById('btnMakeVideo').addEventListener('click', () => showToast('🎬 Generating captioned video…'));
+</script>
 </body>
 </html>
-
