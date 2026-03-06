@@ -327,6 +327,125 @@
       0%, 100% { transform: translateX(0) rotate(0deg); }
       50%       { transform: translateX(4px) rotate(4deg); }
     }
+
+    /* ── processing overlay ── */
+    .processing-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: rgba(10, 12, 16, 0.92);
+      backdrop-filter: blur(12px);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+    }
+    .processing-overlay.active { display: flex; }
+
+    .proc-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px 48px;
+      width: 100%;
+      max-width: 520px;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+    }
+    .proc-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .proc-subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 28px;
+    }
+
+    /* overall bar */
+    .proc-bar-wrap {
+      width: 100%;
+      height: 6px;
+      background: var(--surface2);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+    .proc-bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 6px;
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+      transition: width 0.6s cubic-bezier(0.22,1,0.36,1);
+    }
+
+    /* step list */
+    .proc-steps { display: flex; flex-direction: column; gap: 14px; }
+    .proc-step {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      opacity: 0.35;
+      transition: opacity 0.3s;
+    }
+    .proc-step.active { opacity: 1; }
+    .proc-step.done   { opacity: 0.65; }
+
+    .step-icon {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+      transition: border-color 0.3s, background 0.3s;
+    }
+    .proc-step.active .step-icon {
+      border-color: var(--accent);
+      background: rgba(0,212,255,0.1);
+      animation: stepPulse 1.5s ease-in-out infinite;
+    }
+    .proc-step.done .step-icon {
+      border-color: #00e897;
+      background: rgba(0,232,151,0.1);
+    }
+    @keyframes stepPulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(0,212,255,0.4); }
+      50%      { box-shadow: 0 0 0 6px rgba(0,212,255,0); }
+    }
+
+    .step-info { flex: 1; }
+    .step-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+    .step-detail {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .proc-step.active .step-label { color: var(--accent); }
+    .proc-step.done  .step-label { color: #00e897; }
+
+    .step-check {
+      font-size: 16px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      color: #00e897;
+    }
+    .proc-step.done .step-check { opacity: 1; }
+
+    .proc-eta {
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -379,6 +498,60 @@
         </button>
       </div>
     </div>
+
+  <!-- Processing overlay -->
+  <div class="processing-overlay" id="procOverlay">
+    <div class="proc-card">
+      <div class="proc-title">🔬 ANALYSING VIDEO</div>
+      <div class="proc-subtitle" id="procSubtitle">Starting pipeline...</div>
+      <div class="proc-bar-wrap">
+        <div class="proc-bar-fill" id="procBar"></div>
+      </div>
+      <div class="proc-steps">
+        <div class="proc-step" id="step-upload">
+          <div class="step-icon">📤</div>
+          <div class="step-info">
+            <div class="step-label">Uploading Video</div>
+            <div class="step-detail">Sending to Flask backend</div>
+          </div>
+          <div class="step-check">✓</div>
+        </div>
+        <div class="proc-step" id="step-audio">
+          <div class="step-icon">🎵</div>
+          <div class="step-info">
+            <div class="step-label">Extracting & Denoising Audio</div>
+            <div class="step-detail">MoviePy + noisereduce</div>
+          </div>
+          <div class="step-check">✓</div>
+        </div>
+        <div class="proc-step" id="step-whisper">
+          <div class="step-icon">🎙️</div>
+          <div class="step-info">
+            <div class="step-label">Transcribing Speech</div>
+            <div class="step-detail">OpenAI Whisper base model</div>
+          </div>
+          <div class="step-check">✓</div>
+        </div>
+        <div class="proc-step" id="step-vision">
+          <div class="step-icon">🔍</div>
+          <div class="step-info">
+            <div class="step-label">Analysing Scenes</div>
+            <div class="step-detail" id="visionDetail">Groq + Llama-4 Vision</div>
+          </div>
+          <div class="step-check">✓</div>
+        </div>
+        <div class="proc-step" id="step-merge">
+          <div class="step-icon">⚡</div>
+          <div class="step-info">
+            <div class="step-label">Merging & Scoring</div>
+            <div class="step-detail">Semantic similarity + accuracy</div>
+          </div>
+          <div class="step-check">✓</div>
+        </div>
+      </div>
+      <div class="proc-eta" id="procEta">This may take 2–5 minutes depending on video length</div>
+    </div>
+  </div>
   </main>
 
   <!-- Team name -->
@@ -410,9 +583,17 @@
 
     function loadFile(file) {
       if (!file) return;
-  if (file.type !== 'video/mp4') {
-    alert('Only MP4 files are supported. Please upload a .mp4 file.');
-    return;}
+      if (file.type !== 'video/mp4') {
+        alert('Only MP4 files are supported. Please upload a .mp4 file.');
+        return;
+      }
+      // Clear ALL previous session data so old video never bleeds into new results
+      sessionStorage.removeItem('videoObjectUrl');
+      sessionStorage.removeItem('videoData');
+      sessionStorage.removeItem('videoName');
+      sessionStorage.removeItem('transcript');
+      sessionStorage.removeItem('semanticScore');
+
       const url = URL.createObjectURL(file);
       videoPreview.src = url;
       dropZone.classList.add('has-video');
@@ -442,74 +623,131 @@
       btnSubmit.disabled = true;
     });
 
-    /* submit */
-btnSubmit.addEventListener("click", async () => {
+    /* ── Progress helpers ── */
+    const overlay   = document.getElementById('procOverlay');
+    const procBar   = document.getElementById('procBar');
+    const procSub   = document.getElementById('procSubtitle');
+    const procEta   = document.getElementById('procEta');
 
-  if (btnSubmit.disabled) return;
+    const STEPS = ['upload','audio','whisper','vision','merge'];
 
-  btnSubmit.textContent = "⏳ Processing...";
-  btnSubmit.disabled = true;
+    function setStep(name, detail) {
+      STEPS.forEach((s, i) => {
+        const el = document.getElementById('step-' + s);
+        const idx = STEPS.indexOf(name);
+        if (i < idx)       { el.className = 'proc-step done'; }
+        else if (i === idx) { el.className = 'proc-step active'; }
+        else               { el.className = 'proc-step'; }
+      });
+      const pct = { upload:8, audio:22, whisper:48, vision:78, merge:95 }[name] || 0;
+      procBar.style.width = pct + '%';
+      if (detail) procSub.textContent = detail;
+    }
 
-  const file = fileInput.files[0];
-  const formData = new FormData();
-  formData.append("video", file);
+    function completeAll() {
+      STEPS.forEach(s => { document.getElementById('step-' + s).className = 'proc-step done'; });
+      procBar.style.width = '100%';
+      procSub.textContent = 'Complete! Loading results...';
+      procEta.textContent = '';
+    }
 
-  try {
+    /* ── Submit ── */
+    btnSubmit.addEventListener("click", async () => {
 
-    const response = await fetch("http://127.0.0.1:5000/upload", {
-      method: "POST",
-      body: formData,
-      mode: "cors",
-      credentials: "omit"
+      if (btnSubmit.disabled) return;
+      btnSubmit.textContent = "⏳ Processing...";
+      btnSubmit.disabled = true;
+
+      // Show overlay
+      overlay.classList.add('active');
+      setStep('upload', 'Uploading video to backend...');
+
+      const file = fileInput.files[0];
+      const formData = new FormData();
+      formData.append("video", file);
+
+      // Simulate time-based step progression while waiting for response
+      const stepTimers = [];
+
+      function scheduleStep(name, detail, delayMs) {
+        stepTimers.push(setTimeout(() => setStep(name, detail), delayMs));
+      }
+
+      scheduleStep('audio',   'Extracting audio with MoviePy, denoising...', 2000);
+      scheduleStep('whisper', 'Whisper transcribing speech — please wait...', 8000);
+      scheduleStep('vision',  'Groq Vision analysing frames (this takes the longest)...', 25000);
+      scheduleStep('merge',   'Merging transcript + scenes, calculating scores...', 90000);
+
+      // Estimate frame count from file duration (4s interval = ~1 frame per 4s)
+      // We don't know exact count so show a pulsing "analysing" message instead
+      const frameTimer = setInterval(() => {
+        const detail = document.getElementById('visionDetail');
+        const dots = '.'.repeat((Math.floor(Date.now() / 600) % 3) + 1);
+        if (detail) detail.textContent = `Groq + Llama-4 Vision · analysing frames${dots}`;
+      }, 500);
+
+      try {
+        const response = await fetch("http://127.0.0.1:5000/upload", {
+          method: "POST",
+          body: formData,
+          mode: "cors",
+          credentials: "omit"
+        });
+
+        // Clear all timers once response arrives
+        stepTimers.forEach(t => clearTimeout(t));
+        clearInterval(frameTimer);
+
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`Server error ${response.status}: ${errText}`);
+        }
+
+        const data = await response.json();
+        console.log("Backend response:", data);
+
+        const transcript = data.transcript;
+        if (!transcript || transcript.length === 0) {
+          throw new Error("No transcript returned from backend.");
+        }
+
+        setStep('merge', 'Finalising results...');
+
+        // Save transcript + semantic score first
+        try { sessionStorage.setItem("transcript", JSON.stringify(transcript)); }
+        catch(e) { console.warn("sessionStorage transcript failed:", e); }
+
+        if (data.semantic_score !== null && data.semantic_score !== undefined) {
+          try { sessionStorage.setItem("semanticScore", data.semantic_score); }
+          catch(e) { console.warn("sessionStorage semanticScore failed:", e); }
+        } else {
+          sessionStorage.removeItem("semanticScore");
+        }
+
+        // Store video as blob URL in localStorage-independent way
+        // Use a global variable passed via sessionStorage as object URL key
+        try {
+          // Store just the filename for display
+          sessionStorage.setItem("videoName", file.name);
+          // Create an object URL — works for ANY file size, lives until tab closes
+          const objectUrl = URL.createObjectURL(file);
+          sessionStorage.setItem("videoObjectUrl", objectUrl);
+        } catch(e) {
+          console.warn("Could not store video reference:", e);
+        }
+        completeAll();
+        setTimeout(() => { window.location.href = "result.html"; }, 600);
+
+      } catch (err) {
+        stepTimers.forEach(t => clearTimeout(t));
+        clearInterval(frameTimer);
+        overlay.classList.remove('active');
+        console.error("Fetch error:", err);
+        alert("Backend processing failed: " + err.message);
+        btnSubmit.textContent = "✦ Submit";
+        btnSubmit.disabled = false;
+      }
     });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`Server error ${response.status}: ${errText}`);
-    }
-
-    const data = await response.json();
-
-    console.log("Backend response:", data);
-
-    // Backend app.py returns { "transcript": ["[00:00:00 --> 00:00:04]  text", ...] }
-    const transcript = data.transcript;
-
-    if (!transcript || transcript.length === 0) {
-      alert("Backend processing failed: no transcript returned.");
-      btnSubmit.textContent = "✦ Submit";
-      btnSubmit.disabled = false;
-      return;
-    }
-
-    sessionStorage.setItem("transcript", JSON.stringify(transcript));
-
-    // Store semantic score if backend returned one
-    if (data.semantic_score !== null && data.semantic_score !== undefined) {
-      sessionStorage.setItem("semanticScore", data.semantic_score);
-    } else {
-      sessionStorage.removeItem("semanticScore");
-    }
-
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      sessionStorage.setItem("videoData", reader.result);
-      window.location.href = "result.html";
-    };
-
-    reader.readAsDataURL(file);
-
-  } catch (err) {
-
-    console.error("Fetch error:", err);
-    alert("Backend processing failed: " + err.message);
-    btnSubmit.textContent = "✦ Submit";
-    btnSubmit.disabled = false;
-
-  }
-
-});
   </script>
 </body>
 </html>
