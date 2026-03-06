@@ -443,24 +443,66 @@
     });
 
     /* submit */
-   btnSubmit.addEventListener('click', () => {
+btnSubmit.addEventListener("click", async () => {
+
   if (btnSubmit.disabled) return;
-  btnSubmit.textContent = '⏳ Processing…';
+
+  btnSubmit.textContent = "⏳ Processing...";
   btnSubmit.disabled = true;
 
   const file = fileInput.files[0];
-  const reader = new FileReader();
-  reader.onload = () => {
-    sessionStorage.setItem('videoData', reader.result);
-    sessionStorage.setItem('videoName', file.name);
-    sessionStorage.setItem('videoType', file.type);
-    window.location.href = 'result.html';
-  };
-  reader.readAsDataURL(file);
+  const formData = new FormData();
+  formData.append("video", file);
+
+  try {
+
+    const response = await fetch("http://127.0.0.1:5000/upload", {
+      method: "POST",
+      body: formData,
+      mode: "cors",
+      credentials: "omit"
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Server error ${response.status}: ${errText}`);
+    }
+
+    const data = await response.json();
+
+    console.log("Backend response:", data);
+
+    // Backend app.py returns { "transcript": ["[00:00:00 --> 00:00:04]  text", ...] }
+    const transcript = data.transcript;
+
+    if (!transcript || transcript.length === 0) {
+      alert("Backend processing failed: no transcript returned.");
+      btnSubmit.textContent = "✦ Submit";
+      btnSubmit.disabled = false;
+      return;
+    }
+
+    sessionStorage.setItem("transcript", JSON.stringify(transcript));
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      sessionStorage.setItem("videoData", reader.result);
+      window.location.href = "result.html";
+    };
+
+    reader.readAsDataURL(file);
+
+  } catch (err) {
+
+    console.error("Fetch error:", err);
+    alert("Backend processing failed: " + err.message);
+    btnSubmit.textContent = "✦ Submit";
+    btnSubmit.disabled = false;
+
+  }
+
 });
   </script>
 </body>
 </html>
-
-
-
