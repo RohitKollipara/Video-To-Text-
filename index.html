@@ -318,6 +318,11 @@
       transition: color 0.4s;
     }
 
+
+    /* ── emoji font fix (Windows) ── */
+    .shark-icon, .proc-title, .step-icon {
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", sans-serif;
+    }
     /* ── animations ── */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(24px); }
@@ -494,7 +499,7 @@
           ⬆ Upload
         </button> -->
         <button class="btn btn-submit" id="btnSubmit" disabled>
-          ✦ Submit
+          &#10022; Submit
         </button>
       </div>
     </div>
@@ -556,7 +561,7 @@
 
   <!-- Team name -->
   <div class="team-tag">
-    <span class="shark-icon">🦈</span>
+    <span class="shark-icon">&#x1F988;</span>
     <span class="team-name">SharkAttack</span>
   </div>
 
@@ -655,7 +660,7 @@
     btnSubmit.addEventListener("click", async () => {
 
       if (btnSubmit.disabled) return;
-      btnSubmit.textContent = "⏳ Processing...";
+      btnSubmit.innerHTML = "&#9203; Processing...";
       btnSubmit.disabled = true;
 
       // Show overlay
@@ -724,19 +729,23 @@
           sessionStorage.removeItem("semanticScore");
         }
 
-        // Store video as blob URL in localStorage-independent way
-        // Use a global variable passed via sessionStorage as object URL key
-        try {
-          // Store just the filename for display
-          sessionStorage.setItem("videoName", file.name);
-          // Create an object URL — works for ANY file size, lives until tab closes
-          const objectUrl = URL.createObjectURL(file);
-          sessionStorage.setItem("videoObjectUrl", objectUrl);
-        } catch(e) {
-          console.warn("Could not store video reference:", e);
-        }
-        completeAll();
-        setTimeout(() => { window.location.href = "result.html"; }, 600);
+        // Store video as base64 — works across page navigations
+        sessionStorage.setItem("videoName", file.name);
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            sessionStorage.setItem("videoData", reader.result);
+          } catch(e) {
+            console.warn("Video too large for sessionStorage:", e);
+          }
+          completeAll();
+          setTimeout(() => { window.location.href = "result.html"; }, 600);
+        };
+        reader.onerror = () => {
+          completeAll();
+          setTimeout(() => { window.location.href = "result.html"; }, 600);
+        };
+        reader.readAsDataURL(file);
 
       } catch (err) {
         stepTimers.forEach(t => clearTimeout(t));
@@ -744,7 +753,7 @@
         overlay.classList.remove('active');
         console.error("Fetch error:", err);
         alert("Backend processing failed: " + err.message);
-        btnSubmit.textContent = "🦈 Submit";
+        btnSubmit.innerHTML = "&#10022; Submit";
         btnSubmit.disabled = false;
       }
     });
