@@ -1,437 +1,438 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Visual Context Extractor – Results | SharkAttack</title>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg:#080b12; --panel:#0e1320; --surface:#131929; --surface2:#1c2438;
-      --border:rgba(255,255,255,0.07); --border-hi:rgba(0,220,255,0.35);
-      --accent:#00dcff; --accent2:#0078ff; --green:#00e897; --yellow:#ffd166;
-      --purple:#a78bfa; --text:#e8f0ff; --muted:#5a6585;
-      --mono:'JetBrains Mono', monospace;
-    }
-    [data-theme="light"] {
-      --bg:#edf1fb; --panel:#ffffff; --surface:#f4f7ff; --surface2:#e4eaf8;
-      --border:rgba(0,0,0,0.08); --border-hi:rgba(0,100,220,0.35);
-      --accent:#0060d0; --accent2:#003fa3; --green:#00a86b;
-      --yellow:#d97706; --purple:#7c3aed; --text:#0a0f24; --muted:#8892b0;
-    }
-    html,body { min-height:100%; font-family:'Syne',sans-serif; background:var(--bg); color:var(--text); transition:background .4s,color .4s; }
-    body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
-      background: radial-gradient(ellipse 60% 50% at 15% 15%,rgba(0,220,255,.07) 0%,transparent 60%),
-                  radial-gradient(ellipse 50% 60% at 85% 85%,rgba(0,120,255,.07) 0%,transparent 60%); }
-    body::after { content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
-      background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
-      background-size:52px 52px; opacity:.3; }
+  <!DOCTYPE html>
+  <html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Visual Context Extractor – Results | SharkAttack</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      :root {
+        --bg:#080b12; --panel:#0e1320; --surface:#131929; --surface2:#1c2438;
+        --border:rgba(255,255,255,0.07); --border-hi:rgba(0,220,255,0.35);
+        --accent:#00dcff; --accent2:#0078ff; --green:#00e897; --yellow:#ffd166;
+        --purple:#a78bfa; --text:#e8f0ff; --muted:#5a6585;
+        --mono:'JetBrains Mono', monospace;
+      }
+      [data-theme="light"] {
+        --bg:#edf1fb; --panel:#ffffff; --surface:#f4f7ff; --surface2:#e4eaf8;
+        --border:rgba(0,0,0,0.08); --border-hi:rgba(0,100,220,0.35);
+        --accent:#0060d0; --accent2:#003fa3; --green:#00a86b;
+        --yellow:#d97706; --purple:#7c3aed; --text:#0a0f24; --muted:#8892b0;
+      }
+      html,body { min-height:100%; font-family:'Syne',sans-serif; background:var(--bg); color:var(--text); transition:background .4s,color .4s; }
+      body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+        background: radial-gradient(ellipse 60% 50% at 15% 15%,rgba(0,220,255,.07) 0%,transparent 60%),
+                    radial-gradient(ellipse 50% 60% at 85% 85%,rgba(0,120,255,.07) 0%,transparent 60%); }
+      body::after { content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+        background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+        background-size:52px 52px; opacity:.3; }
 
-    header { position:fixed; top:0; left:0; right:0; z-index:200; height:58px;
-      display:flex; align-items:center; justify-content:space-between; padding:0 32px;
-      background:rgba(8,11,18,.8); backdrop-filter:blur(16px); border-bottom:1px solid var(--border); }
-    [data-theme="light"] header { background:rgba(237,241,251,.88); }
-    .logo { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:.14em;
-      background:linear-gradient(135deg,var(--text) 30%,var(--accent));
-      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-    .header-right { display:flex; align-items:center; gap:12px; }
-    .back-btn { font-size:12px; font-weight:600; letter-spacing:.06em; color:var(--muted);
-      background:var(--surface); border:1px solid var(--border); border-radius:8px;
-      padding:6px 14px; cursor:pointer; text-decoration:none; transition:color .2s,border-color .2s; }
-    .back-btn:hover { color:var(--accent); border-color:var(--border-hi); }
-    .theme-toggle { display:flex; align-items:center; gap:8px; background:var(--surface);
-      border:1px solid var(--border); border-radius:50px; padding:6px 14px 6px 9px;
-      cursor:pointer; transition:box-shadow .25s; }
-    .theme-toggle:hover { box-shadow:0 0 0 1px var(--accent); }
-    .toggle-track { width:32px; height:18px; background:var(--surface2); border-radius:18px; position:relative; border:1px solid var(--border); }
-    .toggle-thumb { position:absolute; top:2px; left:2px; width:12px; height:12px; border-radius:50%; background:var(--accent); transition:transform .3s; }
-    [data-theme="light"] .toggle-thumb { transform:translateX(14px); }
-    .toggle-lbl { font-size:12px; font-weight:600; color:var(--muted); letter-spacing:.05em; user-select:none; }
+      header { position:fixed; top:0; left:0; right:0; z-index:200; height:58px;
+        display:flex; align-items:center; justify-content:space-between; padding:0 32px;
+        background:rgba(8,11,18,.8); backdrop-filter:blur(16px); border-bottom:1px solid var(--border); }
+      [data-theme="light"] header { background:rgba(237,241,251,.88); }
+      .logo { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:.14em;
+        background:linear-gradient(135deg,var(--text) 30%,var(--accent));
+        -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+      .header-right { display:flex; align-items:center; gap:12px; }
+      .back-btn { font-size:12px; font-weight:600; letter-spacing:.06em; color:var(--muted);
+        background:var(--surface); border:1px solid var(--border); border-radius:8px;
+        padding:6px 14px; cursor:pointer; text-decoration:none; transition:color .2s,border-color .2s; }
+      .back-btn:hover { color:var(--accent); border-color:var(--border-hi); }
+      .theme-toggle { display:flex; align-items:center; gap:8px; background:var(--surface);
+        border:1px solid var(--border); border-radius:50px; padding:6px 14px 6px 9px;
+        cursor:pointer; transition:box-shadow .25s; }
+      .theme-toggle:hover { box-shadow:0 0 0 1px var(--accent); }
+      .toggle-track { width:32px; height:18px; background:var(--surface2); border-radius:18px; position:relative; border:1px solid var(--border); }
+      .toggle-thumb { position:absolute; top:2px; left:2px; width:12px; height:12px; border-radius:50%; background:var(--accent); transition:transform .3s; }
+      [data-theme="light"] .toggle-thumb { transform:translateX(14px); }
+      .toggle-lbl { font-size:12px; font-weight:600; color:var(--muted); letter-spacing:.05em; user-select:none; }
 
-    .page { position:relative; z-index:1; max-width:1200px; margin:0 auto; padding:80px 24px 60px; }
+      .page { position:relative; z-index:1; max-width:1200px; margin:0 auto; padding:80px 24px 60px; }
 
-    .page-title { text-align:center; margin-bottom:28px; animation:fadeUp .6s ease both; }
-    .page-title .eyebrow { font-size:11px; letter-spacing:.3em; text-transform:uppercase; color:var(--accent); margin-bottom:8px; font-weight:600; }
-    .page-title h1 { font-family:'Bebas Neue',sans-serif; font-size:clamp(34px,5vw,52px); letter-spacing:.08em;
-      background:linear-gradient(135deg,var(--text) 50%,var(--accent));
-      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+      .page-title { text-align:center; margin-bottom:28px; animation:fadeUp .6s ease both; }
+      .page-title .eyebrow { font-size:11px; letter-spacing:.3em; text-transform:uppercase; color:var(--accent); margin-bottom:8px; font-weight:600; }
+      .page-title h1 { font-family:'Bebas Neue',sans-serif; font-size:clamp(34px,5vw,52px); letter-spacing:.08em;
+        background:linear-gradient(135deg,var(--text) 50%,var(--accent));
+        -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
 
-    /* stat strip */
-    .stat-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; animation:fadeUp .6s .1s ease both; }
-    .stat-card { background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:16px 18px; display:flex; flex-direction:column; gap:4px; transition:border-color .2s; }
-    .stat-card:hover { border-color:var(--border-hi); }
-    .s-label { font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
-    .s-value { font-family:'Bebas Neue',sans-serif; font-size:30px; line-height:1; color:var(--text); }
-    .s-value.green { color:var(--green); text-shadow:0 0 20px rgba(0,232,151,.25); }
-    .s-value.blue  { color:var(--accent); text-shadow:0 0 20px rgba(0,220,255,.25); }
-    .s-value.purple{ color:var(--purple); text-shadow:0 0 20px rgba(167,139,250,.25); }
-    .s-sub { font-size:11px; color:var(--muted); margin-top:2px; }
-    .acc-track { width:100%; height:4px; background:var(--surface2); border-radius:4px; overflow:hidden; margin-top:8px; }
-    .acc-fill { height:100%; width:0%; background:linear-gradient(90deg,var(--accent2),var(--green)); border-radius:4px; transition:width 1.6s cubic-bezier(.22,1,.36,1); }
-    .sem-fill { height:100%; width:0%; background:linear-gradient(90deg,var(--purple),var(--accent)); border-radius:4px; transition:width 1.6s .3s cubic-bezier(.22,1,.36,1); }
+      /* stat strip */
+      .stat-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; animation:fadeUp .6s .1s ease both; }
+      .stat-card { background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:16px 18px; display:flex; flex-direction:column; gap:4px; transition:border-color .2s; }
+      .stat-card:hover { border-color:var(--border-hi); }
+      .s-label { font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+      .s-value { font-family:'Bebas Neue',sans-serif; font-size:30px; line-height:1; color:var(--text); }
+      .s-value.green { color:var(--green); text-shadow:0 0 20px rgba(0,232,151,.25); }
+      .s-value.blue  { color:var(--accent); text-shadow:0 0 20px rgba(0,220,255,.25); }
+      .s-value.purple{ color:var(--purple); text-shadow:0 0 20px rgba(167,139,250,.25); }
+      .s-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+      .acc-track { width:100%; height:4px; background:var(--surface2); border-radius:4px; overflow:hidden; margin-top:8px; }
+      .acc-fill { height:100%; width:0%; background:linear-gradient(90deg,var(--accent2),var(--green)); border-radius:4px; transition:width 1.6s cubic-bezier(.22,1,.36,1); }
+      .sem-fill { height:100%; width:0%; background:linear-gradient(90deg,var(--purple),var(--accent)); border-radius:4px; transition:width 1.6s .3s cubic-bezier(.22,1,.36,1); }
 
-    /* top grid */
-    .top-grid { display:grid; grid-template-columns:400px 1fr; gap:20px; margin-bottom:20px; animation:fadeUp .6s .2s ease both; }
+      /* top grid */
+      .top-grid { display:grid; grid-template-columns:400px 1fr; gap:20px; margin-bottom:20px; animation:fadeUp .6s .2s ease both; }
 
-    .panel { background:var(--panel); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
-    .panel-header { display:flex; align-items:center; gap:10px; padding:14px 18px; border-bottom:1px solid var(--border); }
-    .panel-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-    .panel-dot.blue   { background:var(--accent); box-shadow:0 0 8px var(--accent); }
-    .panel-dot.green  { background:var(--green);  box-shadow:0 0 8px var(--green); }
-    .panel-dot.yellow { background:var(--yellow); box-shadow:0 0 8px var(--yellow); }
-    .panel-title { font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:.1em; }
-    .panel-badge { margin-left:auto; font-size:11px; font-weight:600; letter-spacing:.07em; text-transform:uppercase;
-      padding:3px 10px; border-radius:20px; background:var(--surface2); color:var(--muted); border:1px solid var(--border); }
+      .panel { background:var(--panel); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+      .panel-header { display:flex; align-items:center; gap:10px; padding:14px 18px; border-bottom:1px solid var(--border); }
+      .panel-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+      .panel-dot.blue   { background:var(--accent); box-shadow:0 0 8px var(--accent); }
+      .panel-dot.green  { background:var(--green);  box-shadow:0 0 8px var(--green); }
+      .panel-dot.yellow { background:var(--yellow); box-shadow:0 0 8px var(--yellow); }
+      .panel-title { font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:.1em; }
+      .panel-badge { margin-left:auto; font-size:11px; font-weight:600; letter-spacing:.07em; text-transform:uppercase;
+        padding:3px 10px; border-radius:20px; background:var(--surface2); color:var(--muted); border:1px solid var(--border); }
 
-    /* video */
-    .video-body { padding:14px; }
-    .video-wrap { width:100%; aspect-ratio:16/9; background:#000; border-radius:10px; overflow:hidden; border:1px solid var(--border); position:relative; }
-    .video-wrap video { width:100%; height:100%; object-fit:cover; display:block; }
-    .video-placeholder { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; background:var(--surface); }
-    .play-ring { width:54px; height:54px; border-radius:50%; border:2px solid var(--border-hi); display:flex; align-items:center; justify-content:center; animation:pulse 2s ease-in-out infinite; }
-    .play-ring svg { width:20px; height:20px; fill:var(--accent); margin-left:3px; }
-    @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(0,220,255,.3)} 50%{box-shadow:0 0 0 14px rgba(0,220,255,0)} }
-    .placeholder-txt { font-size:12px; color:var(--muted); }
-    .video-meta { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
-    .meta-chip { font-size:11px; font-weight:600; color:var(--muted); background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:4px 10px; display:flex; align-items:center; gap:5px; }
-    .meta-chip .dot { width:5px; height:5px; border-radius:50%; background:var(--accent); }
+      /* video */
+      .video-body { padding:14px; }
+      .video-wrap { width:100%; aspect-ratio:16/9; background:#000; border-radius:10px; overflow:hidden; border:1px solid var(--border); position:relative; }
+      .video-wrap video { width:100%; height:100%; object-fit:cover; display:block; }
+      .video-placeholder { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; background:var(--surface); }
+      .play-ring { width:54px; height:54px; border-radius:50%; border:2px solid var(--border-hi); display:flex; align-items:center; justify-content:center; animation:pulse 2s ease-in-out infinite; }
+      .play-ring svg { width:20px; height:20px; fill:var(--accent); margin-left:3px; }
+      @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(0,220,255,.3)} 50%{box-shadow:0 0 0 14px rgba(0,220,255,0)} }
+      .placeholder-txt { font-size:12px; color:var(--muted); }
+      .video-meta { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+      .meta-chip { font-size:11px; font-weight:600; color:var(--muted); background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:4px 10px; display:flex; align-items:center; gap:5px; }
+      .meta-chip .dot { width:5px; height:5px; border-radius:50%; background:var(--accent); }
 
-    /* segment list */
-    .waveform { display:flex; align-items:flex-end; gap:2px; height:28px; padding:0 16px; border-bottom:1px solid var(--border); background:var(--surface); }
-    .wave-bar { width:3px; border-radius:3px; background:var(--accent); animation:wave var(--d,.8s) ease-in-out infinite alternate; opacity:.4; }
-    @keyframes wave { from{height:3px} to{height:var(--h,18px)} }
+      /* segment list */
+      .waveform { display:flex; align-items:flex-end; gap:2px; height:28px; padding:0 16px; border-bottom:1px solid var(--border); background:var(--surface); }
+      .wave-bar { width:3px; border-radius:3px; background:var(--accent); animation:wave var(--d,.8s) ease-in-out infinite alternate; opacity:.4; }
+      @keyframes wave { from{height:3px} to{height:var(--h,18px)} }
 
-    .seg-list-scroll { overflow-y:auto; max-height:296px; padding:8px; }
-    .seg-list-scroll::-webkit-scrollbar { width:4px; }
-    .seg-list-scroll::-webkit-scrollbar-thumb { background:var(--surface2); border-radius:4px; }
+      .seg-list-scroll { overflow-y:auto; max-height:296px; padding:8px; }
+      .seg-list-scroll::-webkit-scrollbar { width:4px; }
+      .seg-list-scroll::-webkit-scrollbar-thumb { background:var(--surface2); border-radius:4px; }
 
-    .seg-pill { display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:10px;
-      margin-bottom:6px; border:1px solid var(--border); background:var(--surface);
-      cursor:pointer; transition:border-color .2s,background .2s; }
-    .seg-pill:hover,.seg-pill.active { border-color:var(--border-hi); background:var(--surface2); }
-    .seg-pill .ts { font-family:var(--mono); font-size:10px; color:var(--accent); white-space:nowrap; opacity:.8; }
-    .seg-pill .seg-txt { font-size:13px; color:var(--text); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .seg-pill .arrow { color:var(--muted); font-size:11px; flex-shrink:0; transition:color .2s; }
-    .seg-pill:hover .arrow,.seg-pill.active .arrow { color:var(--accent); }
+      .seg-pill { display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:10px;
+        margin-bottom:6px; border:1px solid var(--border); background:var(--surface);
+        cursor:pointer; transition:border-color .2s,background .2s; }
+      .seg-pill:hover,.seg-pill.active { border-color:var(--border-hi); background:var(--surface2); }
+      .seg-pill .ts { font-family:var(--mono); font-size:10px; color:var(--accent); white-space:nowrap; opacity:.8; }
+      .seg-pill .seg-txt { font-size:13px; color:var(--text); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      .seg-pill .arrow { color:var(--muted); font-size:11px; flex-shrink:0; transition:color .2s; }
+      .seg-pill:hover .arrow,.seg-pill.active .arrow { color:var(--accent); }
 
-    /* scene detail */
-    .scene-detail { animation:fadeUp .6s .25s ease both; }
-    .scene-body { padding:20px; }
-    .scene-audio { font-family:var(--mono); font-size:14px; background:var(--surface);
-      border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:16px; line-height:1.6; }
-    .audio-label { font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+      /* scene detail */
+      .scene-detail { animation:fadeUp .6s .25s ease both; }
+      .scene-body { padding:20px; }
+      .scene-audio { font-family:var(--mono); font-size:14px; background:var(--surface);
+        border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:16px; line-height:1.6; }
+      .audio-label { font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
 
-    .scene-fields { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
-    .field-chip { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; transition:border-color .2s; }
-    .field-chip:hover { border-color:var(--border-hi); }
-    .field-label { font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; margin-bottom:5px; }
-    .field-label.action     { color:var(--accent); }
-    .field-label.camera     { color:var(--green); }
-    .field-label.emotion    { color:var(--yellow); }
-    .field-label.atmosphere { color:var(--purple); }
-    .field-value { font-size:12.5px; color:var(--text); line-height:1.5; }
-    .context-chip { margin-top:0; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; grid-column:span 2; }
-    .context-chip .field-label { color:var(--muted); }
-    .context-chip .field-value { font-size:13px; color:var(--muted); font-style:italic; line-height:1.6; }
+      .scene-fields { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+      .field-chip { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; transition:border-color .2s; }
+      .field-chip:hover { border-color:var(--border-hi); }
+      .field-label { font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; margin-bottom:5px; }
+      .field-label.action     { color:var(--accent); }
+      .field-label.camera     { color:var(--green); }
+      .field-label.emotion    { color:var(--yellow); }
+      .field-label.atmosphere { color:var(--purple); }
+      .field-value { font-size:12.5px; color:var(--text); line-height:1.5; }
+      .context-chip { margin-top:0; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; grid-column:span 2; }
+      .context-chip .field-label { color:var(--muted); }
+      .context-chip .field-value { font-size:13px; color:var(--muted); font-style:italic; line-height:1.6; }
 
-    .scene-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; height:180px; color:var(--muted); font-size:13px; }
+      .scene-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; height:180px; color:var(--muted); font-size:13px; }
 
-    /* action bar */
-    .action-bar { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:20px; animation:fadeUp .6s .35s ease both; }
-    .act-btn { display:flex; align-items:center; justify-content:center; gap:10px; padding:16px 20px;
-      background:var(--panel); border:1px solid var(--border); border-radius:14px;
-      cursor:pointer; font-family:'Syne',sans-serif; font-size:13px; font-weight:700;
-      letter-spacing:.05em; color:var(--muted); transition:border-color .2s,color .2s,box-shadow .2s,transform .15s; }
-    .act-btn:hover { transform:translateY(-2px); }
-    .act-btn .ico { font-size:20px; }
-    .act-btn.make-video:hover { border-color:var(--accent); color:var(--accent); box-shadow:0 4px 24px rgba(0,220,255,.12); }
-    .act-btn.copy-btn:hover   { border-color:var(--green);  color:var(--green);  box-shadow:0 4px 24px rgba(0,232,151,.12); }
-    .act-btn.reupload:hover   { border-color:var(--yellow); color:var(--yellow); box-shadow:0 4px 24px rgba(255,209,102,.12); }
+      /* action bar */
+      .action-bar { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:20px; animation:fadeUp .6s .35s ease both; }
+      .act-btn { display:flex; align-items:center; justify-content:center; gap:10px; padding:16px 20px;
+        background:var(--panel); border:1px solid var(--border); border-radius:14px;
+        cursor:pointer; font-family:'Syne',sans-serif; font-size:13px; font-weight:700;
+        letter-spacing:.05em; color:var(--muted); transition:border-color .2s,color .2s,box-shadow .2s,transform .15s; }
+      .act-btn:hover { transform:translateY(-2px); }
+      .act-btn .ico { font-size:20px; }
+      .act-btn.make-video:hover { border-color:var(--accent); color:var(--accent); box-shadow:0 4px 24px rgba(0,220,255,.12); }
+      .act-btn.copy-btn:hover   { border-color:var(--green);  color:var(--green);  box-shadow:0 4px 24px rgba(0,232,151,.12); }
+      .act-btn.reupload:hover   { border-color:var(--yellow); color:var(--yellow); box-shadow:0 4px 24px rgba(255,209,102,.12); }
 
-    .toast { position:fixed; bottom:28px; right:28px; z-index:400; background:var(--panel);
-      border:1px solid var(--border-hi); border-radius:12px; padding:13px 22px;
-      font-size:13px; font-weight:600; color:var(--accent); box-shadow:0 8px 32px rgba(0,0,0,.4);
-      transform:translateY(80px); opacity:0; transition:transform .35s,opacity .35s; pointer-events:none; }
-    .toast.show { transform:translateY(0); opacity:1; }
+      .toast { position:fixed; bottom:28px; right:28px; z-index:400; background:var(--panel);
+        border:1px solid var(--border-hi); border-radius:12px; padding:13px 22px;
+        font-size:13px; font-weight:600; color:var(--accent); box-shadow:0 8px 32px rgba(0,0,0,.4);
+        transform:translateY(80px); opacity:0; transition:transform .35s,opacity .35s; pointer-events:none; }
+      .toast.show { transform:translateY(0); opacity:1; }
 
-    .team-tag { position:fixed; bottom:20px; left:22px; z-index:200; display:flex; align-items:center; gap:7px; }
-    .shark { font-size:16px; animation:swim 3s ease-in-out infinite; }
-    .team-name { font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:.18em; color:var(--accent); text-shadow:0 0 10px rgba(0,220,255,.4); }
-    @keyframes swim { 0%,100%{transform:translateX(0) rotate(0)} 50%{transform:translateX(4px) rotate(5deg)} }
-    @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+      .team-tag { position:fixed; bottom:20px; left:22px; z-index:200; display:flex; align-items:center; gap:7px; }
+      .shark { font-size:16px; animation:swim 3s ease-in-out infinite; }
+      .team-name { font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:.18em; color:var(--accent); text-shadow:0 0 10px rgba(0,220,255,.4); }
+      @keyframes swim { 0%,100%{transform:translateX(0) rotate(0)} 50%{transform:translateX(4px) rotate(5deg)} }
+      @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
 
-    @media (max-width:860px) {
-      .top-grid { grid-template-columns:1fr; }
-      .stat-strip { grid-template-columns:repeat(3,1fr); }
-      .action-bar { grid-template-columns:1fr 1fr; }
-      .scene-fields { grid-template-columns:1fr; }
-    }
-  </style>
-</head>
-<body>
+      @media (max-width:860px) {
+        .top-grid { grid-template-columns:1fr; }
+        .stat-strip { grid-template-columns:repeat(3,1fr); }
+        .action-bar { grid-template-columns:1fr 1fr; }
+        .scene-fields { grid-template-columns:1fr; }
+      }
+    </style>
+  </head>
+  <body>
 
-<header>
-  <span class="logo">Visual Context Extractor</span>
-  <div class="header-right">
-    <a class="back-btn" href="/">← New Video</a>
-    <button class="theme-toggle" id="themeToggle">
-      <div class="toggle-track"><div class="toggle-thumb"></div></div>
-      <span class="toggle-lbl" id="themeLabel">DARK</span>
-    </button>
-  </div>
-</header>
-
-<div class="team-tag"><span class="shark">🦈</span><span class="team-name">SharkAttack</span></div>
-<div class="toast" id="toast"></div>
-
-<div class="page">
-
-  <div class="page-title">
-    <p class="eyebrow">Analysis Complete</p>
-    <h1>Extraction Results</h1>
-  </div>
-
-  <div class="stat-strip">
-    <div class="stat-card">
-      <span class="s-label">Accuracy Score</span>
-      <span class="s-value green" id="accDisplay">—</span>
-      <div class="acc-track"><div class="acc-fill" id="accBar"></div></div>
+  <header>
+    <span class="logo">Visual Context Extractor</span>
+    <div class="header-right">
+      <a class="back-btn" href="/">← New Video</a>
+      <button class="theme-toggle" id="themeToggle">
+        <div class="toggle-track"><div class="toggle-thumb"></div></div>
+        <span class="toggle-lbl" id="themeLabel">DARK</span>
+      </button>
     </div>
-    <div class="stat-card">
-      <span class="s-label">Word Count</span>
-      <span class="s-value blue" id="wordCount">—</span>
-      <span class="s-sub">words detected</span>
-    </div>
-    <div class="stat-card">
-      <span class="s-label">Segments</span>
-      <span class="s-value" id="segCount">—</span>
-      <span class="s-sub">time segments</span>
-    </div>
-    <div class="stat-card">
-      <span class="s-label">Semantic Score</span>
-      <span class="s-value purple" id="semDisplay">—</span>
-      <div class="acc-track"><div class="sem-fill" id="semBar"></div></div>
-      <span class="s-sub" id="semSub">TF-IDF similarity</span>
+  </header>
+
+  <div class="team-tag"><span class="shark">🦈</span><span class="team-name">SharkAttack</span></div>
+  <div class="toast" id="toast"></div>
+
+  <div class="page">
+
+    <div class="page-title">
+      <p class="eyebrow">Analysis Complete</p>
+      <h1>Extraction Results</h1>
     </div>
 
-  </div>
-
-  <div class="top-grid">
-
-    <!-- Video -->
-    <div class="panel">
-      <div class="panel-header">
-        <span class="panel-dot blue"></span>
-        <span class="panel-title">Video Input</span>
-        <span class="panel-badge">MP4</span>
+    <div class="stat-strip">
+      <div class="stat-card">
+        <span class="s-label">Accuracy Score</span>
+        <span class="s-value green" id="accDisplay">—</span>
+        <div class="acc-track"><div class="acc-fill" id="accBar"></div></div>
       </div>
-      <div class="video-body">
-        <div class="video-wrap">
-          <video id="videoEl" style="display:none;" controls></video>
-          <div class="video-placeholder" id="vidPlaceholder">
-            <div class="play-ring"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
-            <p class="placeholder-txt">No video loaded</p>
+      <div class="stat-card">
+        <span class="s-label">Word Count</span>
+        <span class="s-value blue" id="wordCount">—</span>
+        <span class="s-sub">words detected</span>
+      </div>
+      <div class="stat-card">
+        <span class="s-label">Segments</span>
+        <span class="s-value" id="segCount">—</span>
+        <span class="s-sub">time segments</span>
+      </div>
+      <div class="stat-card">
+        <span class="s-label">Semantic Score</span>
+        <span class="s-value purple" id="semDisplay">—</span>
+        <div class="acc-track"><div class="sem-fill" id="semBar"></div></div>
+        <span class="s-sub" id="semSub">TF-IDF similarity</span>
+      </div>
+
+    </div>
+
+    <div class="top-grid">
+
+      <!-- Video -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-dot blue"></span>
+          <span class="panel-title">Video Input</span>
+          <span class="panel-badge">MP4</span>
+        </div>
+        <div class="video-body">
+          <div class="video-wrap">
+            <video id="videoEl" style="display:none;" controls></video>
+            <div class="video-placeholder" id="vidPlaceholder">
+              <div class="play-ring"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+              <p class="placeholder-txt">No video loaded</p>
+            </div>
+          </div>
+          <div class="video-meta" id="videoMeta" style="display:none;">
+            <span class="meta-chip"><span class="dot"></span><span id="metaDur">—</span></span>
+            <span class="meta-chip"><span class="dot"></span>AI Transcribed</span>
+            <span class="meta-chip"><span class="dot"></span>Scene Analysed</span>
           </div>
         </div>
-        <div class="video-meta" id="videoMeta" style="display:none;">
-          <span class="meta-chip"><span class="dot"></span><span id="metaDur">—</span></span>
-          <span class="meta-chip"><span class="dot"></span>AI Transcribed</span>
-          <span class="meta-chip"><span class="dot"></span>Scene Analysed</span>
+      </div>
+
+      <!-- Segment list -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-dot green"></span>
+          <span class="panel-title">Segments</span>
+          <span class="panel-badge" id="wordCountBadge">— words</span>
+        </div>
+        <div class="waveform" id="waveform"></div>
+        <div class="seg-list-scroll" id="segList">
+          <div class="scene-empty" id="segEmpty">
+            <span style="font-size:24px;opacity:.2;">🎬</span><span>No segments yet</span>
+          </div>
         </div>
       </div>
+
     </div>
 
-    <!-- Segment list -->
-    <div class="panel">
+    <!-- Scene detail — full width, updates on segment click -->
+    <div class="panel scene-detail" id="sceneDetail">
       <div class="panel-header">
-        <span class="panel-dot green"></span>
-        <span class="panel-title">Segments</span>
-        <span class="panel-badge" id="wordCountBadge">— words</span>
+        <span class="panel-dot yellow"></span>
+        <span class="panel-title">Scene Analysis</span>
+        <span class="panel-badge" id="sceneTimeBadge">Select a segment ↑</span>
       </div>
-      <div class="waveform" id="waveform"></div>
-      <div class="seg-list-scroll" id="segList">
-        <div class="scene-empty" id="segEmpty">
-          <span style="font-size:24px;opacity:.2;">🎬</span><span>No segments yet</span>
+      <div class="scene-body" id="sceneBody">
+        <div class="scene-empty">
+          <span style="font-size:28px;opacity:.2;">🔍</span>
+          <span>Click any segment above to see its full scene analysis</span>
         </div>
       </div>
     </div>
 
+    <div class="action-bar">
+      <button class="act-btn make-video" id="btnMakeVideo"><span class="ico">🎬</span> Make a Video</button>
+      <button class="act-btn copy-btn"   id="btnCopy"><span class="ico">📋</span> Copy Transcript</button>
+      <button class="act-btn reupload"   id="btnReupload"><span class="ico">🔄</span> New Upload</button>
+    </div>
+
   </div>
 
-  <!-- Scene detail — full width, updates on segment click -->
-  <div class="panel scene-detail" id="sceneDetail">
-    <div class="panel-header">
-      <span class="panel-dot yellow"></span>
-      <span class="panel-title">Scene Analysis</span>
-      <span class="panel-badge" id="sceneTimeBadge">Select a segment ↑</span>
-    </div>
-    <div class="scene-body" id="sceneBody">
-      <div class="scene-empty">
-        <span style="font-size:28px;opacity:.2;">🔍</span>
-        <span>Click any segment above to see its full scene analysis</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="action-bar">
-    <button class="act-btn make-video" id="btnMakeVideo"><span class="ico">🎬</span> Make a Video</button>
-    <button class="act-btn copy-btn"   id="btnCopy"><span class="ico">📋</span> Copy Transcript</button>
-    <button class="act-btn reupload"   id="btnReupload"><span class="ico">🔄</span> New Upload</button>
-  </div>
-
-</div>
-
-<script>
-/* theme */
-const html = document.documentElement;
-document.getElementById('themeToggle').addEventListener('click', () => {
-  const dark = html.getAttribute('data-theme') === 'dark';
-  html.setAttribute('data-theme', dark ? 'light' : 'dark');
-  document.getElementById('themeLabel').textContent = dark ? 'LIGHT' : 'DARK';
-});
-
-/* waveform */
-const wf = document.getElementById('waveform');
-for (let i = 0; i < 52; i++) {
-  const b = document.createElement('div');
-  b.className = 'wave-bar';
-  b.style.cssText = `--h:${4+Math.random()*20}px;--d:${(0.4+Math.random()*.8).toFixed(2)}s;animation-delay:${(Math.random()*.8).toFixed(2)}s`;
-  wf.appendChild(b);
-}
-
-/* toast */
-const toast = document.getElementById('toast');
-function showToast(msg) { toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),2600); }
-
-/* format time */
-function fmt(s) {
-  return `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(Math.floor((s%3600)/60)).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;
-}
-
-/* accuracy formula — tune BASE, SEG_BONUS, DENSITY_BONUS */
-function calcAccuracy(segs) {
-  const BASE=88, SEG_BONUS=0.4, DENSITY_BONUS=1.2;
-  const segBonus = Math.min(segs.length * SEG_BONUS, 6);
-  const avg = segs.reduce((s,x)=>s+(x.text||'').split(' ').length,0) / Math.max(segs.length,1);
-  const density = Math.min((avg/8)*DENSITY_BONUS, 5);
-  return Math.min(Math.round(BASE+segBonus+density), 99);
-}
-
-/* render scene detail panel */
-function renderScene(seg) {
-  document.getElementById('sceneTimeBadge').textContent = `${fmt(seg.start)} → ${fmt(seg.end)}`;
-  document.getElementById('sceneBody').innerHTML = `
-    <div class="scene-audio">
-      <div class="audio-label">🎙 Audio</div>
-      <div>${seg.text||'—'}</div>
-    </div>
-    <div class="scene-fields">
-      <div class="field-chip">
-        <div class="field-label action">Action</div>
-        <div class="field-value">${seg.action||'N/A'}</div>
-      </div>
-      <div class="field-chip">
-        <div class="field-label camera">Camera</div>
-        <div class="field-value">${seg.camera||'N/A'}</div>
-      </div>
-      <div class="field-chip">
-        <div class="field-label emotion">Emotion</div>
-        <div class="field-value">${seg.emotion||'N/A'}</div>
-      </div>
-      <div class="field-chip">
-        <div class="field-label atmosphere">Atmosphere</div>
-        <div class="field-value">${seg.atmosphere||'N/A'}</div>
-      </div>
-      <div class="context-chip">
-        <div class="field-label">Context</div>
-        <div class="field-value">${seg.context||'N/A'}</div>
-      </div>
-    </div>`;
-}
-
-/* main */
-let allSegments = [];
-
-window.addEventListener('load', () => {
-  /* video */
-  const videoEl = document.getElementById('videoEl');
-  const videoData = sessionStorage.getItem('videoData');
-  if (videoData) {
-    videoEl.src = videoData;
-    videoEl.style.display = 'block';
-    document.getElementById('vidPlaceholder').style.display = 'none';
-    document.getElementById('videoMeta').style.display = 'flex';
-    videoEl.addEventListener('loadedmetadata', () => {
-      const d = videoEl.duration;
-      document.getElementById('metaDur').textContent =
-        `${Math.floor(d/60)}:${String(Math.floor(d%60)).padStart(2,'0')} duration`;
-    });
-  }
-
-  /* transcript — now array of rich objects */
-  const raw = sessionStorage.getItem('transcript');
-  if (!raw) return;
-  allSegments = JSON.parse(raw);
-  if (!allSegments || !allSegments.length) return;
-
-  /* stats */
-  let totalWords = 0;
-  allSegments.forEach(s => totalWords += (s.text||'').split(' ').filter(Boolean).length);
-  document.getElementById('wordCountBadge').textContent = `${totalWords} words`;
-  document.getElementById('wordCount').textContent = totalWords;
-  document.getElementById('segCount').textContent   = allSegments.length;
-
-  const acc = calcAccuracy(allSegments);
-  document.getElementById('accDisplay').textContent = acc + '%';
-  setTimeout(() => { document.getElementById('accBar').style.width = acc + '%'; }, 500);
-
-  // Semantic score — comes from backend via sessionStorage
-  const semRaw = sessionStorage.getItem('semanticScore');
-  if (semRaw !== null) {
-    const sem = parseFloat(semRaw);
-    document.getElementById('semDisplay').textContent = sem.toFixed(1) + '%';
-    document.getElementById('semSub').textContent = sem >= 80 ? 'Excellent match' : sem >= 60 ? 'Good match' : sem >= 40 ? 'Moderate match' : 'Low match';
-    setTimeout(() => { document.getElementById('semBar').style.width = Math.min(sem, 100) + '%'; }, 700);
-  } else {
-    document.getElementById('semDisplay').textContent = 'N/A';
-    document.getElementById('semSub').textContent = 'Run merge first';
-  }
-
-  /* build segment pills */
-  const segList = document.getElementById('segList');
-  document.getElementById('segEmpty').style.display = 'none';
-
-  allSegments.forEach((seg, i) => {
-    const pill = document.createElement('div');
-    pill.className = 'seg-pill';
-    pill.innerHTML = `
-      <span class="ts">${fmt(seg.start)} → ${fmt(seg.end)}</span>
-      <span class="seg-txt">${seg.text||'—'}</span>
-      <span class="arrow">▶</span>`;
-    pill.addEventListener('click', () => {
-      document.querySelectorAll('.seg-pill').forEach(p=>p.classList.remove('active'));
-      pill.classList.add('active');
-      renderScene(seg);
-      if (videoEl.src) videoEl.currentTime = seg.start;
-    });
-    segList.appendChild(pill);
-    if (i === 0) { pill.classList.add('active'); renderScene(seg); }
+  <script>
+  /* theme */
+  const html = document.documentElement;
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    const dark = html.getAttribute('data-theme') === 'dark';
+    html.setAttribute('data-theme', dark ? 'light' : 'dark');
+    document.getElementById('themeLabel').textContent = dark ? 'LIGHT' : 'DARK';
   });
-});
 
-/* copy — exports full scene data */
-document.getElementById('btnCopy').addEventListener('click', () => {
-  const lines = allSegments.map(s =>
-    `[${fmt(s.start)} --> ${fmt(s.end)}]  ${s.text}\n  ACTION:      ${s.action||'N/A'}\n  CAMERA:      ${s.camera||'N/A'}\n  EMOTION:     ${s.emotion||'N/A'}\n  ATMOSPHERE:  ${s.atmosphere||'N/A'}\n  CONTEXT:     ${s.context||'N/A'}`
-  ).join('\n\n');
-  navigator.clipboard.writeText(lines)
-    .then(()=>showToast('✓ Full scene data copied!'))
-    .catch(()=>showToast('Copy failed'));
-});
+  /* waveform */
+  const wf = document.getElementById('waveform');
+  for (let i = 0; i < 52; i++) {
+    const b = document.createElement('div');
+    b.className = 'wave-bar';
+    b.style.cssText = `--h:${4+Math.random()*20}px;--d:${(0.4+Math.random()*.8).toFixed(2)}s;animation-delay:${(Math.random()*.8).toFixed(2)}s`;
+    wf.appendChild(b);
+  }
 
-document.getElementById('btnReupload').addEventListener('click', () => window.location.href = '/');
-document.getElementById('btnMakeVideo').addEventListener('click', () => showToast('🎬 Generating captioned video…'));
-</script>
-</body>
-</html>
+  /* toast */
+  const toast = document.getElementById('toast');
+  function showToast(msg) { toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),2600); }
+
+  /* format time */
+  function fmt(s) {
+    return `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(Math.floor((s%3600)/60)).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+  }
+
+  /* accuracy formula — tune BASE, SEG_BONUS, DENSITY_BONUS */
+  function calcAccuracy(segs) {
+    const BASE=88, SEG_BONUS=0.4, DENSITY_BONUS=1.2;
+    const segBonus = Math.min(segs.length * SEG_BONUS, 6);
+    const avg = segs.reduce((s,x)=>s+(x.text||'').split(' ').length,0) / Math.max(segs.length,1);
+    const density = Math.min((avg/8)*DENSITY_BONUS, 5);
+    return Math.min(Math.round(BASE+segBonus+density), 99);
+  }
+
+  /* render scene detail panel */
+  function renderScene(seg) {
+    document.getElementById('sceneTimeBadge').textContent = `${fmt(seg.start)} → ${fmt(seg.end)}`;
+    document.getElementById('sceneBody').innerHTML = `
+      <div class="scene-audio">
+        <div class="audio-label">🎙 Audio</div>
+        <div>${seg.text||'—'}</div>
+      </div>
+      <div class="scene-fields">
+        <div class="field-chip">
+          <div class="field-label action">Action</div>
+          <div class="field-value">${seg.action||'N/A'}</div>
+        </div>
+        <div class="field-chip">
+          <div class="field-label camera">Camera</div>
+          <div class="field-value">${seg.camera||'N/A'}</div>
+        </div>
+        <div class="field-chip">
+          <div class="field-label emotion">Emotion</div>
+          <div class="field-value">${seg.emotion||'N/A'}</div>
+        </div>
+        <div class="field-chip">
+          <div class="field-label atmosphere">Atmosphere</div>
+          <div class="field-value">${seg.atmosphere||'N/A'}</div>
+        </div>
+        <div class="context-chip">
+          <div class="field-label">Context</div>
+          <div class="field-value">${seg.context||'N/A'}</div>
+        </div>
+      </div>`;
+  }
+
+  /* main */
+  let allSegments = [];
+
+  window.addEventListener('load', () => {
+    /* video */
+    const videoEl  = document.getElementById('videoEl');
+    const videoSrc = sessionStorage.getItem('videoData');
+
+    if (videoSrc) {
+      videoEl.src = videoSrc;
+      videoEl.style.display = 'block';
+      document.getElementById('vidPlaceholder').style.display = 'none';
+      document.getElementById('videoMeta').style.display = 'flex';
+      videoEl.addEventListener('loadedmetadata', () => {
+        const d = videoEl.duration;
+        document.getElementById('metaDur').textContent =
+          `${Math.floor(d/60)}:${String(Math.floor(d%60)).padStart(2,'0')} duration`;
+      });
+    }
+
+    /* transcript — now array of rich objects */
+    const raw = sessionStorage.getItem('transcript');
+    if (!raw) return;
+    allSegments = JSON.parse(raw);
+    if (!allSegments || !allSegments.length) return;
+
+    /* stats */
+    let totalWords = 0;
+    allSegments.forEach(s => totalWords += (s.text||'').split(' ').filter(Boolean).length);
+    document.getElementById('wordCountBadge').textContent = `${totalWords} words`;
+    document.getElementById('wordCount').textContent = totalWords;
+    document.getElementById('segCount').textContent   = allSegments.length;
+
+    const acc = calcAccuracy(allSegments);
+    document.getElementById('accDisplay').textContent = acc + '%';
+    setTimeout(() => { document.getElementById('accBar').style.width = acc + '%'; }, 500);
+
+    // Semantic score — comes from backend via sessionStorage
+    const semRaw = sessionStorage.getItem('semanticScore');
+    if (semRaw !== null) {
+      const sem = parseFloat(semRaw);
+      document.getElementById('semDisplay').textContent = sem.toFixed(1) + '%';
+      document.getElementById('semSub').textContent = sem >= 80 ? 'Excellent match' : sem >= 60 ? 'Good match' : sem >= 40 ? 'Moderate match' : 'Low match';
+      setTimeout(() => { document.getElementById('semBar').style.width = Math.min(sem, 100) + '%'; }, 700);
+    } else {
+      document.getElementById('semDisplay').textContent = 'N/A';
+      document.getElementById('semSub').textContent = 'Run merge first';
+    }
+
+    /* build segment pills */
+    const segList = document.getElementById('segList');
+    document.getElementById('segEmpty').style.display = 'none';
+
+    allSegments.forEach((seg, i) => {
+      const pill = document.createElement('div');
+      pill.className = 'seg-pill';
+      pill.innerHTML = `
+        <span class="ts">${fmt(seg.start)} → ${fmt(seg.end)}</span>
+        <span class="seg-txt">${seg.text||'—'}</span>
+        <span class="arrow">▶</span>`;
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.seg-pill').forEach(p=>p.classList.remove('active'));
+        pill.classList.add('active');
+        renderScene(seg);
+        if (videoEl.src) videoEl.currentTime = seg.start;
+      });
+      segList.appendChild(pill);
+      if (i === 0) { pill.classList.add('active'); renderScene(seg); }
+    });
+  });
+
+  /* copy — exports full scene data */
+  document.getElementById('btnCopy').addEventListener('click', () => {
+    const lines = allSegments.map(s =>
+      `[${fmt(s.start)} --> ${fmt(s.end)}]  ${s.text}\n  ACTION:      ${s.action||'N/A'}\n  CAMERA:      ${s.camera||'N/A'}\n  EMOTION:     ${s.emotion||'N/A'}\n  ATMOSPHERE:  ${s.atmosphere||'N/A'}\n  CONTEXT:     ${s.context||'N/A'}`
+    ).join('\n\n');
+    navigator.clipboard.writeText(lines)
+      .then(()=>showToast('✓ Full scene data copied!'))
+      .catch(()=>showToast('Copy failed'));
+  });
+
+  document.getElementById('btnReupload').addEventListener('click', () => window.location.href = '/');
+  document.getElementById('btnMakeVideo').addEventListener('click', () => showToast('🎬 Generating captioned video…'));
+  </script>
+  </body>
+  </html>
