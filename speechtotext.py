@@ -47,7 +47,7 @@ def denoise_audio(audio_path: str) -> tuple[np.ndarray, int] | None:
             y=audio_data,
             sr=sample_rate,
             y_noise=noise_sample,
-            prop_decrease=0,
+            prop_decrease=0.2,
             stationary=False
         )
 
