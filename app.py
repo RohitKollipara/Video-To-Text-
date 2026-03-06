@@ -1,10 +1,11 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 import os
 
 from services.speechtotext import transcribe_video
 from services.scenedescribing import describe_video
-from services.merge2 import merge_transcription_and_scenes
 
 FRONTEND_FOLDER = os.path.join(os.path.dirname(__file__), "../frontend")
 
@@ -12,7 +13,7 @@ app = Flask(__name__, static_folder=FRONTEND_FOLDER)
 CORS(app)
 
 UPLOAD_FOLDER = "uploads"
-GROQ_API_KEY  = "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" 
+GROQ_API_KEY  = "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"
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -24,6 +25,40 @@ def index():
 @app.route("/result.html")
 def result():
     return send_from_directory(FRONTEND_FOLDER, "result.html")
+
+
+def compute_semantic_score_inline(plain_text: str, merged: list) -> float | None:
+    """
+    Compute TF-IDF cosine similarity directly from in-memory data.
+    Compares the plain transcription text against all AUDIO + CONTEXT
+    fields from the merged segments — same logic as semanticscore.py
+    but without needing any files on disk.
+    """
+    try:
+        if not plain_text or not merged:
+            return None
+
+        # Build the "prompt side" text from AUDIO + CONTEXT of each segment
+        prompt_parts = []
+        for seg in merged:
+            if seg.get("text"):
+                prompt_parts.append(seg["text"])
+            if seg.get("context") and seg["context"] != "N/A":
+                prompt_parts.append(seg["context"])
+
+        prompt_text = " ".join(prompt_parts)
+
+        if not prompt_text.strip():
+            return None
+
+        vectorizer   = TfidfVectorizer()
+        tfidf_matrix = vectorizer.fit_transform([plain_text, prompt_text])
+        score        = cosine_similarity(tfidf_matrix[0], tfidf_matrix[1])[0][0]
+        return round(float(score), 4)
+
+    except Exception as e:
+        print("Inline semantic score error:", e)
+        return None
 
 
 @app.route("/upload", methods=["POST"])
@@ -39,7 +74,8 @@ def upload_video():
 
         # ── Step 1: Speech to text ──
         transcription = transcribe_video(video_path)
-        segments = transcription.get("segments", [])
+        segments      = transcription.get("segments", [])
+        plain_text    = transcription.get("plain_text", "")   # already built by speechtotext.py
 
         formatted = []
         for seg in segments:
@@ -56,7 +92,6 @@ def upload_video():
         print("Scene analysis done:", len(scenes) if scenes else 0, "frames")
 
         # ── Step 3: Merge ──
-        # Match each transcript segment to its nearest scene description
         merged = []
         for seg in formatted:
             seg_start = seg["start"]
@@ -81,8 +116,16 @@ def upload_video():
                 "context":    scene.get("context",    "N/A"),
             })
 
-        print("Merge done. Returning response.")
-        return jsonify({"transcript": merged})
+        # ── Step 4: Semantic Score — in memory, no files needed ──
+        print("Calculating semantic score...")
+        raw_score      = compute_semantic_score_inline(plain_text, merged)
+        semantic_score = round(raw_score * 100, 1) if raw_score is not None else None
+        print("Semantic score:", semantic_score)
+
+        return jsonify({
+            "transcript":     merged,
+            "semantic_score": semantic_score
+        })
 
     except Exception as e:
         import traceback
